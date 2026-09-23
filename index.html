@@ -296,6 +296,242 @@ table.tbl tbody tr:hover{background:var(--surface2)}
   #page{padding:0;max-width:none}
   .slip{max-width:none;font-size:12px;padding:0}
 }
+
+/* ===================================================================
+   PREMIUM LAYER
+   Depth, gradient and type refinements applied on top of the base.
+   Everything still reads from the same tokens, so a theme switch
+   carries through the whole thing.
+   =================================================================== */
+:root{
+  --r:16px; --r-sm:12px; --r-lg:26px;
+  --shadow:0 1px 2px rgba(15,23,42,.05),0 10px 26px -16px rgba(15,23,42,.28);
+  --shadow-lg:0 4px 10px rgba(15,23,42,.07),0 30px 60px -28px rgba(15,23,42,.36);
+  --ring:color-mix(in srgb,var(--pri) 24%,transparent);
+  --glow:color-mix(in srgb,var(--pri) 12%,transparent);
+  --hair:color-mix(in srgb,var(--text) 8%,transparent);
+}
+html[data-theme="dark"]{
+  --hair:color-mix(in srgb,#ffffff 10%,transparent);
+  --bg:#080d13; --surface:#111923; --surface2:#18222e; --surface3:#22303e;
+  /* the status colours have to lift off a dark sheet, not sink into it */
+  --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+}
+html[data-theme="dark"] .btn-ok{background:linear-gradient(180deg,#10b981,#047857)}
+html[data-theme="dark"] .btn-bad{background:linear-gradient(180deg,#f87171,#b91c1c)}
+html[data-density="compact"]{ --pad:13px; --gap:10px; --tap:44px }
+
+body{
+  background:
+    radial-gradient(1100px 620px at 8% -8%, var(--glow), transparent 60%),
+    radial-gradient(900px 520px at 108% 0%, color-mix(in srgb,var(--acc) 9%,transparent), transparent 62%),
+    var(--bg);
+  background-attachment:fixed;
+  letter-spacing:.005em;
+}
+.num,.tile .v,.duecard-amt,.duerow-amt,.totals .big,.mini-v,
+table.tbl td.right,table.tbl th.right{
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+}
+
+/* --------------------------------------------------------- surfaces */
+.card{
+  border-color:var(--hair);
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--surface) 100%,transparent),
+    color-mix(in srgb,var(--surface2) 62%,var(--surface)));
+  backdrop-filter:saturate(120%);
+}
+.tile{
+  border-color:var(--hair);position:relative;overflow:hidden;
+  background:linear-gradient(180deg,var(--surface),
+    color-mix(in srgb,var(--surface2) 70%,var(--surface)));
+  transition:transform .16s cubic-bezier(.2,.8,.3,1),box-shadow .16s;
+}
+.tile::before{
+  content:"";position:absolute;inset:0 0 auto 0;height:3px;
+  background:linear-gradient(90deg,var(--pri-l),var(--pri));opacity:.85;
+}
+.tile:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.tile .k{letter-spacing:.08em;font-size:.7rem}
+.tile .v{letter-spacing:-.02em;font-weight:800}
+.tile-hero{
+  color:#fff;border-color:transparent;
+  background:linear-gradient(135deg,var(--pri-d),var(--pri) 55%,var(--pri-l));
+  box-shadow:0 16px 40px -20px color-mix(in srgb,var(--pri) 85%,transparent),var(--shadow);
+}
+.tile-hero::before{display:none}
+.tile-hero .k,.tile-hero .s{color:rgba(255,255,255,.82)}
+.tile-hero .v{color:#fff}
+.tiles4{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.ok-t{color:var(--ok)} .bad-t{color:var(--bad)} .warn-t{color:var(--warn)}
+.strong{font-weight:700} .up{letter-spacing:.08em;text-transform:uppercase}
+
+/* ------------------------------------------------------------- rail */
+#rail{
+  background:linear-gradient(180deg,var(--surface),
+    color-mix(in srgb,var(--surface2) 80%,var(--surface)));
+  border-right-color:var(--hair);
+}
+.brand{padding:20px 18px 14px}
+.brand-mark{
+  width:44px;height:44px;flex:0 0 44px;border-radius:14px;
+  box-shadow:0 10px 22px -12px color-mix(in srgb,var(--pri) 90%,transparent);
+}
+.navbtn{position:relative;border-radius:12px}
+.navbtn::before{
+  content:"";position:absolute;left:0;top:50%;height:0;width:3px;border-radius:0 3px 3px 0;
+  background:var(--pri);transform:translateY(-50%);transition:height .18s ease;
+}
+.navbtn.on{
+  color:var(--pri);font-weight:700;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--pri) 16%,transparent),
+                                   color-mix(in srgb,var(--pri) 5%,transparent));
+}
+.navbtn.on::before{height:56%}
+
+/* -------------------------------------------------------------- top */
+#top{
+  padding:14px var(--pad);border-bottom-color:var(--hair);
+  background:color-mix(in srgb,var(--bg) 78%,transparent);
+}
+#top h1{letter-spacing:-.02em}
+#page{animation:pagein .22s cubic-bezier(.2,.8,.3,1)}
+@keyframes pagein{from{opacity:0;transform:translateY(6px)}}
+
+/* ---------------------------------------------------------- buttons */
+.btn{border-color:var(--hair);border-radius:12px;letter-spacing:.005em}
+.btn-pri{
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--pri-l) 30%,var(--pri)),var(--pri-d));
+  border-color:transparent;
+  box-shadow:0 10px 22px -14px color-mix(in srgb,var(--pri) 92%,transparent),
+             inset 0 1px 0 rgba(255,255,255,.18);
+}
+.btn-ok{background:linear-gradient(180deg,#22c55e,#15803d);border-color:transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+.btn-bad{background:linear-gradient(180deg,#ef4444,#b91c1c);border-color:transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+.btn-acc{background:linear-gradient(180deg,var(--acc),
+  color-mix(in srgb,var(--acc) 70%,#000));border-color:transparent}
+.btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--ring)}
+.btn-ghost{border-color:transparent}
+.btn-ghost:hover{background:var(--surface2)}
+.installbtn{white-space:nowrap}
+
+.inp{border-color:var(--hair);border-radius:12px;
+  background:color-mix(in srgb,var(--surface2) 88%,var(--surface))}
+.inp:focus{box-shadow:0 0 0 4px var(--ring)}
+.seg{border-color:var(--hair);border-radius:12px}
+.seg button.on{background:linear-gradient(180deg,
+  color-mix(in srgb,var(--pri-l) 28%,var(--pri)),var(--pri-d));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+.chip{border-color:var(--hair)}
+table.tbl th{background:color-mix(in srgb,var(--surface) 92%,transparent)}
+table.tbl tbody tr{transition:background .12s}
+
+/* ------------------------------------------------------- swatches */
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.swatch{display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:8px 6px 6px;border-radius:14px;width:76px;color:var(--muted);
+  border:1px solid transparent;transition:background .12s,border-color .12s}
+.swatch .dot{width:34px;height:34px;border-radius:50%;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 14px -8px rgba(0,0,0,.6)}
+.swatch:hover{background:var(--surface2)}
+.swatch.on{border-color:var(--pri);background:color-mix(in srgb,var(--pri) 10%,transparent);
+  color:var(--pri);font-weight:700}
+.swatch.on .dot{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--pri)}
+
+.steps{margin:14px 0 0;padding-inline-start:22px;line-height:2}
+.steps li{font-weight:600}
+
+/* ============================================================ বাকি */
+.searchhero{
+  margin-top:var(--gap);padding:10px;display:flex;gap:8px;align-items:center;
+  border-color:color-mix(in srgb,var(--pri) 26%,var(--hair));
+  box-shadow:0 0 0 4px var(--glow),var(--shadow);
+}
+.searchhero.first{margin-top:0;margin-bottom:var(--gap)}
+.searchhero .field{flex:1;min-width:0}
+.bigsearch{
+  min-height:56px;font-size:1.12rem;font-weight:600;border:0;background:transparent;
+}
+.bigsearch:focus{box-shadow:none}
+
+.avatar{
+  width:48px;height:48px;flex:0 0 48px;border-radius:15px;display:grid;place-items:center;
+  color:#fff;font-weight:800;font-size:1.2rem;
+  background:linear-gradient(135deg,var(--pri-l),var(--pri-d));
+  box-shadow:0 10px 20px -12px color-mix(in srgb,var(--pri) 90%,transparent);
+}
+.avatar.sm{width:38px;height:38px;flex:0 0 38px;border-radius:12px;font-size:.98rem}
+
+.duecard{overflow:hidden}
+.duecard-head{
+  display:flex;gap:14px;align-items:center;padding:18px var(--pad);
+  background:linear-gradient(135deg,
+    color-mix(in srgb,var(--pri) 13%,transparent),
+    color-mix(in srgb,var(--acc) 7%,transparent));
+  border-bottom:1px solid var(--hair);
+}
+.duecard-name{font-size:1.22rem;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+.duecard-amt{font-size:1.85rem;font-weight:800;color:var(--bad);letter-spacing:-.02em;
+  line-height:1.1}
+.duecard-body{padding:var(--pad)}
+.minirow{gap:10px}
+.mini{flex:1;min-width:130px;padding:10px 12px;border-radius:12px;
+  background:var(--surface2);border:1px solid var(--hair)}
+.mini-v{font-weight:800;font-size:1.02rem;margin-top:3px}
+.duecard-led{padding:0 var(--pad) var(--pad)}
+
+.duelist{overflow:hidden;padding:4px}
+.duerow{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  padding:11px 12px;border-radius:12px;transition:background .12s;
+}
+.duerow + .duerow{border-top:1px solid var(--hair)}
+.duerow:hover{background:var(--surface2)}
+.duerow:active{background:var(--surface3)}
+.duerow .grow{display:flex;flex-direction:column;gap:1px;min-width:0}
+.duerow-name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.duerow-amt{font-weight:800;color:var(--bad);white-space:nowrap;font-size:1.04rem}
+.duerow-go{color:var(--faint);font-size:1.3rem;line-height:1}
+
+/* ------------------------------------------------------------ phone */
+@media (max-width:900px){
+  .tiles4{grid-template-columns:1fr 1fr}
+  .tiles4 .tile{padding:12px 13px}
+  .tiles4 .tile .v{font-size:1.12rem}
+  .tiles4 .tile .k{font-size:.64rem}
+  .tiles4 .tile .s{font-size:.7rem}
+  .tiles4 .tile-hero{grid-column:1 / -1}
+  .tiles4 .tile-hero .v{font-size:1.75rem}
+  .installbtn{font-size:.78rem;padding:0 10px;min-height:36px}
+  .duecard-head{padding:14px}
+  .duecard-amt{font-size:1.5rem}
+  .duecard-name{font-size:1.06rem}
+  .mini{min-width:calc(50% - 5px)}
+  .only-wide{display:none !important}
+  .bigsearch{min-height:50px;font-size:1rem}
+  #tabbar{
+    background:color-mix(in srgb,var(--surface) 92%,transparent);
+    backdrop-filter:saturate(180%) blur(14px);
+    -webkit-backdrop-filter:saturate(180%) blur(14px);
+    border-top-color:var(--hair);
+  }
+  #tabbar button{position:relative;transition:color .14s}
+  #tabbar button.on::before{
+    content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:30px;height:3px;border-radius:0 0 3px 3px;
+    background:linear-gradient(90deg,var(--pri-l),var(--pri));
+  }
+  #tabbar button.on .ic{transform:translateY(-1px)}
+}
+@media (min-width:901px){ .only-wide{display:inline-flex} }
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+
 </style>
 </head>
 <body>
@@ -1299,6 +1535,146 @@ window.SHOP = {
     return "https://wa.me/" + intl + "?text=" + encodeURIComponent(text || "");
   };
 
+
+  // ==================================================================
+  //  বাকি — the credit book
+  //
+  //  A shopkeeper's real question is never "what is the balance".  It is
+  //  "which sale is this money still sitting against, and how long has it
+  //  been there".  So the ledger is rebuilt from the sales and the
+  //  payments rather than read off the single running figure, and unpaid
+  //  amounts are aged oldest-first the way a shopkeeper counts them.
+  // ==================================================================
+
+  /** Whole-day difference between two YYYY-MM-DD keys. */
+  function daysApart(from, to) {
+    if (!from || !to) return 0;
+    const a = new Date(from + "T00:00:00");
+    const b = new Date(to + "T00:00:00");
+    if (isNaN(a) || isNaN(b)) return 0;
+    return Math.round((b - a) / 86400000);
+  }
+
+  /** Oldest still-unpaid credit sale, settling payments first-in-first-out. */
+  function oldestUnpaid(entries) {
+    const queue = [];
+    entries.forEach(function (e) {
+      if (e.kind === "sale") { queue.push({ day: e.day, left: e.amount }); return; }
+      let pay = e.amount;
+      while (pay > 0.004 && queue.length) {
+        const head = queue[0];
+        const take = Math.min(head.left, pay);
+        head.left = r2(head.left - take);
+        pay = r2(pay - take);
+        if (head.left <= 0.004) queue.shift();
+      }
+    });
+    return queue.length ? queue[0].day : "";
+  }
+
+  /** Every credit sale and every payment for one customer, oldest first,
+   *  each carrying the balance as it stood right after that line. */
+  E.prototype.dueLedger = function (customer_id) {
+    const entries = [];
+    this._t("sales").forEach(function (s) {
+      if (s.customer_id !== customer_id) return;
+      if (s.status !== "completed") return;
+      if (num(s.due) <= 0.004) return;
+      entries.push({
+        kind: "sale", at: s.created_at || "", day: dayOf(s),
+        label: s.invoice_no || "", amount: r2(num(s.due)),
+        total: r2(num(s.grand_total)), sale_id: s.id,
+      });
+    });
+    this._t("due_payments").forEach(function (p) {
+      if (p.customer_id !== customer_id) return;
+      entries.push({
+        kind: "payment", at: p.created_at || (p.paid_on || "") + " 00:00:00",
+        day: p.paid_on || "", label: p.method || "Cash",
+        amount: r2(num(p.amount)), note: p.note || "",
+      });
+    });
+    entries.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
+    let bal = 0;
+    entries.forEach(function (e) {
+      bal = r2(bal + (e.kind === "sale" ? e.amount : -e.amount));
+      e.balance = bal;
+    });
+    return entries;
+  };
+
+  /** One customer with everything the বাকি screen shows about them. */
+  E.prototype.dueProfile = function (customer_id) {
+    const c = this.customer(customer_id);
+    if (!c) return null;
+    const led = this.dueLedger(customer_id);
+    const today = dayKey();
+    let lastSale = "", lastPaid = "", charged = 0, paid = 0;
+    led.forEach(function (e) {
+      if (e.kind === "sale") { lastSale = e.day || lastSale; charged += e.amount; }
+      else { lastPaid = e.day || lastPaid; paid += e.amount; }
+    });
+    const oldest = oldestUnpaid(led);
+    return {
+      row: c, due: r2(num(c.due)), ledger: led,
+      charged: r2(charged), paid: r2(paid),
+      last_sale: lastSale, last_paid: lastPaid,
+      oldest: oldest, days: oldest ? daysApart(oldest, today) : 0,
+    };
+  };
+
+  /** Everyone who still owes, biggest first (or oldest first). */
+  E.prototype.dueCustomers = function (opts) {
+    opts = opts || {};
+    const self = this;
+    const q = String(opts.search || "").trim().toLowerCase();
+    const digits = q.replace(/\D/g, "");
+    let rows = this._t("customers").filter(function (c) { return num(c.due) > 0.004; });
+    if (q) {
+      rows = rows.filter(function (c) {
+        const phone = String(c.phone || "").replace(/\D/g, "");
+        const wa = String(c.whatsapp || "").replace(/\D/g, "");
+        return (c.name || "").toLowerCase().indexOf(q) >= 0 ||
+               (digits.length >= 3 && (phone.indexOf(digits) >= 0 || wa.indexOf(digits) >= 0));
+      });
+    }
+    const out = rows.map(function (c) { return self.dueProfile(c.id); });
+    if (opts.sort === "old") out.sort(function (a, b) { return b.days - a.days; });
+    else if (opts.sort === "name") {
+      out.sort(function (a, b) {
+        return (a.row.name || "").localeCompare(b.row.name || "");
+      });
+    } else out.sort(function (a, b) { return b.due - a.due; });
+    return out;
+  };
+
+  /** Head-of-page figures for the বাকি screen. */
+  E.prototype.dueSummary = function () {
+    const list = this.dueCustomers();
+    const month = dayKey().slice(0, 7);
+    let collected = 0;
+    this._t("due_payments").forEach(function (p) {
+      if (String(p.paid_on || "").slice(0, 7) === month) collected += num(p.amount);
+    });
+    let old30 = 0, people30 = 0;
+    list.forEach(function (c) { if (c.days >= 30) { old30 += c.due; people30 += 1; } });
+    return {
+      total: r2(list.reduce(function (s, c) { return s + c.due; }, 0)),
+      people: list.length,
+      collected_month: r2(collected),
+      old30: r2(old30), people30: people30,
+      biggest: list.length ? list[0] : null,
+      list: list,
+    };
+  };
+
+  /** Payments taken in a date range — for the reports screen. */
+  E.prototype.duePaymentsBetween = function (start, end) {
+    return this._t("due_payments").filter(function (p) {
+      return inRange(String(p.paid_on || "").slice(0, 10), start, end);
+    }).sort(function (a, b) { return String(b.paid_on).localeCompare(String(a.paid_on)); });
+  };
+
   E.prototype.smsLink = function (phone, text) {
     return "sms:" + String(phone || "").replace(/[^\d+]/g, "")
       + "?body=" + encodeURIComponent(text || "");
@@ -1555,7 +1931,7 @@ window.SHOP = {
     "Dashboard":"ড্যাশবোর্ড","New sale":"নতুন বিক্রয়","Products":"পণ্য",
     "Customers":"কাস্টমার","Suppliers":"সাপ্লায়ার","Reports":"রিপোর্ট",
     "Profit & cash":"লাভ ও ক্যাশ","Mobile banking":"মোবাইল ব্যাংকিং",
-    "Settings":"সেটিংস","More":"আরও","Sale":"বিক্রয়",
+    "Settings":"সেটিংস","More":"আরও","Sale":"বিক্রয়","Dues":"বাকি",
     // common
     "Save":"সেভ","Cancel":"বাতিল","Delete":"মুছুন","Edit":"এডিট","Close":"বন্ধ",
     "Add":"যোগ","Search":"খুঁজুন","Today":"আজ","Yesterday":"গতকাল",
@@ -1630,6 +2006,7 @@ window.SHOP = {
     // settings
     "Shop":"দোকান","Appearance":"চেহারা","Language":"ভাষা","Theme":"থিম",
     "Light":"দিন","Dark":"রাত","Text size":"লেখার সাইজ","Colour":"রঙ",
+    "Density":"ঘনত্ব","Theme":"থিম","Language":"ভাষা","App":"অ্যাপ",
     "Receipt":"মেমো","Backup":"ব্যাকআপ","Save backup":"ব্যাকআপ নামান",
     "Restore backup":"ব্যাকআপ ফেরান","Shops":"দোকানসমূহ","Add shop":"দোকান যোগ",
     "Switch shop":"দোকান বদলান","Targets":"টার্গেট","Danger zone":"সাবধান",
@@ -1824,29 +2201,162 @@ window.SHOP = {
   };
 
   // ------------------------------------------------------- appearance
-  App.applyTheme = function () {
+  /** Named looks, not just an accent colour.  Each one carries its own
+   *  primary ramp and a second colour used for gradients and highlights,
+   *  so switching actually changes the feel of the app rather than
+   *  recolouring one button. */
+  App.THEMES = {
+    emerald: { bn: "পান্না",  en: "Emerald", pri: "#0f766e", d: "#0b5f58", l: "#2dd4bf",
+               acc: "#7c3aed", dk: ["#14b8a6", "#0d9488", "#5eead4"] },
+    indigo:  { bn: "নীল",     en: "Indigo",  pri: "#4338ca", d: "#3730a3", l: "#818cf8",
+               acc: "#0ea5e9", dk: ["#818cf8", "#6366f1", "#a5b4fc"] },
+    royal:   { bn: "বেগুনি",  en: "Royal",   pri: "#7e22ce", d: "#6b21a8", l: "#c084fc",
+               acc: "#db2777", dk: ["#c084fc", "#a855f7", "#d8b4fe"] },
+    ruby:    { bn: "লাল",     en: "Ruby",    pri: "#be123c", d: "#9f1239", l: "#fb7185",
+               acc: "#7c3aed", dk: ["#fb7185", "#e11d48", "#fda4af"] },
+    sunset:  { bn: "কমলা",    en: "Sunset",  pri: "#c2410c", d: "#9a3412", l: "#fb923c",
+               acc: "#db2777", dk: ["#fb923c", "#ea580c", "#fdba74"] },
+    forest:  { bn: "সবুজ",    en: "Forest",  pri: "#15803d", d: "#166534", l: "#4ade80",
+               acc: "#0d9488", dk: ["#4ade80", "#22c55e", "#86efac"] },
+    ocean:   { bn: "সাগর",    en: "Ocean",   pri: "#0369a1", d: "#075985", l: "#38bdf8",
+               acc: "#06b6d4", dk: ["#38bdf8", "#0ea5e9", "#7dd3fc"] },
+    gold:    { bn: "সোনালি",  en: "Gold",    pri: "#a16207", d: "#854d0e", l: "#facc15",
+               acc: "#b45309", dk: ["#facc15", "#eab308", "#fde047"] },
+  };
+
+  /** light / dark / auto — auto follows the phone's own setting. */
+  App.darkNow = function () {
     const mode = App.eng.setting("theme", "light");
-    document.documentElement.setAttribute("data-theme", mode === "dark" ? "dark" : "light");
-    const hue = App.eng.setting("accent", "teal");
-    const palette = {
-      teal:   ["#0f766e", "#0b5f58", "#14b8a6"],
-      blue:   ["#1d4ed8", "#1e40af", "#3b82f6"],
-      violet: ["#6d28d9", "#5b21b6", "#8b5cf6"],
-      rose:   ["#be123c", "#9f1239", "#f43f5e"],
-      amber:  ["#b45309", "#92400e", "#f59e0b"],
-      green:  ["#15803d", "#166534", "#22c55e"],
-    }[hue] || null;
-    if (palette) {
-      document.documentElement.style.setProperty("--pri", palette[0]);
-      document.documentElement.style.setProperty("--pri-d", palette[1]);
-      document.documentElement.style.setProperty("--pri-l", palette[2]);
+    if (mode === "dark") return true;
+    if (mode === "auto") {
+      return !!(root.matchMedia && root.matchMedia("(prefers-color-scheme: dark)").matches);
     }
+    return false;
+  };
+
+  App.applyTheme = function () {
+    const dark = App.darkNow();
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+
+    const key = App.eng.setting("accent", "emerald");
+    const th = App.THEMES[key] || App.THEMES.emerald;
+    const s = document.documentElement.style;
+    if (dark) {
+      s.setProperty("--pri", th.dk[0]);
+      s.setProperty("--pri-d", th.dk[1]);
+      s.setProperty("--pri-l", th.dk[2]);
+    } else {
+      s.setProperty("--pri", th.pri);
+      s.setProperty("--pri-d", th.d);
+      s.setProperty("--pri-l", th.l);
+    }
+    s.setProperty("--acc", th.acc);
+
     const size = App.eng.setting("text_size", "normal");
-    document.documentElement.style.setProperty("--fs",
+    s.setProperty("--fs",
       ({ small: "15px", normal: "16px", large: "18px", largest: "20px" })[size] || "16px");
+    document.documentElement.setAttribute("data-density",
+      App.eng.setting("density", "comfortable"));
+
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content",
       getComputedStyle(document.documentElement).getPropertyValue("--pri").trim());
+  };
+
+  /** The round swatches in Settings — you pick a look by seeing it. */
+  App.themeSwatches = function () {
+    const wrap = el("div", { class: "swatches" });
+    Object.keys(App.THEMES).forEach(function (key) {
+      const th = App.THEMES[key];
+      const on = App.eng.setting("accent", "emerald") === key;
+      wrap.appendChild(el("button", {
+        class: "swatch" + (on ? " on" : ""),
+        title: root.isBn() ? th.bn : th.en,
+        onclick: function () {
+          App.eng.setSetting("accent", key); App.applyTheme(); App.refresh();
+        },
+      }, [
+        el("span", { class: "dot", style: {
+          background: "linear-gradient(135deg," + th.l + "," + th.d + ")" } }),
+        el("span", { class: "tiny", text: root.isBn() ? th.bn : th.en }),
+      ]));
+    });
+    return wrap;
+  };
+
+
+  // ------------------------------------------------------ install app
+  App.isStandalone = function () {
+    return !!(root.matchMedia && root.matchMedia("(display-mode: standalone)").matches)
+        || root.navigator.standalone === true;
+  };
+  App.isIOS = function () {
+    return /iPad|iPhone|iPod/.test(root.navigator.userAgent || "")
+        || (root.navigator.platform === "MacIntel" && root.navigator.maxTouchPoints > 1);
+  };
+
+  App.installApp = function () {
+    if (App.installEvent) {
+      const e = App.installEvent;
+      App.installEvent = null;
+      e.prompt();
+      e.userChoice.then(function (r) {
+        if (r && r.outcome !== "accepted") App.installEvent = e;
+        if (App.refreshInstallBtn) App.refreshInstallBtn();
+      });
+      return;
+    }
+    // No prompt on offer — say plainly how this browser does it.
+    const ios = App.isIOS();
+    const bn = root.isBn();
+    const steps = ios
+      ? (bn ? ["নিচে (বা উপরে) শেয়ার বাটন ⬆ চাপুন",
+               "লিস্ট থেকে “Add to Home Screen” বাছুন",
+               "উপরে ডানে “Add” চাপুন"]
+            : ["Tap the Share button", "Choose “Add to Home Screen”", "Tap “Add”"])
+      : (bn ? ["ব্রাউজারের উপরে ডানে ⋮ (তিন ফোঁটা) চাপুন",
+               "“Install app” বা “Add to Home screen” বাছুন",
+               "“Install” চাপুন"]
+            : ["Open the browser menu (⋮)", "Choose “Install app”", "Tap Install"]);
+    const m = App.modal({ title: bn ? "অ্যাপ হিসেবে বসান" : "Install the app" });
+    m.body.appendChild(el("p", { class: "muted", style: { marginTop: 0 },
+      text: bn ? "বসালে হোম স্ক্রিনে আইকন হবে, ব্রাউজারের ঠিকানা লেখা থাকবে না, আর নেট ছাড়াই খুলবে।"
+               : "It gets a home-screen icon, no address bar, and opens without internet." }));
+    const ol = el("ol", { class: "steps" });
+    steps.forEach(function (t) { ol.appendChild(el("li", { text: t })); });
+    m.body.appendChild(ol);
+    m.footer.appendChild(el("button", { class: "btn btn-pri", text: root.T("Close"),
+      onclick: m.close }));
+  };
+
+  // ------------------------------------------------------- top tools
+  App.buildTools = function () {
+    const box = $("#top-tools");
+    if (!box) return;
+    clear(box);
+
+    box.appendChild(el("button", {
+      class: "btn btn-ghost btn-icon",
+      title: App.darkNow() ? root.T("Light") : root.T("Dark"),
+      text: App.darkNow() ? "☀" : "☾",
+      onclick: function () {
+        App.eng.setSetting("theme", App.darkNow() ? "light" : "dark");
+        App.applyTheme(); App.refresh();
+      },
+    }));
+
+    const btn = el("button", {
+      class: "btn btn-sm btn-pri installbtn",
+      text: "⬇ " + (root.isBn() ? "অ্যাপ বসান" : "Install app"),
+      onclick: App.installApp,
+    });
+    box.appendChild(btn);
+    App.refreshInstallBtn = function () {
+      const hide = App.isStandalone()
+        || (!App.installEvent && !App.isIOS() && !/Chrome|Edg/i.test(root.navigator.userAgent || ""));
+      btn.classList.toggle("hide", hide);
+    };
+    App.refreshInstallBtn();
   };
 
   // ------------------------------------------------------------- nav
@@ -1854,6 +2364,7 @@ window.SHOP = {
     ["dashboard", "▦", "Dashboard"],
     ["till",      "🛒", "New sale"],
     ["products",  "📦", "Products"],
+    ["dues",      "📕", "Dues"],
     ["customers", "👥", "Customers"],
     ["suppliers", "🚚", "Suppliers"],
     ["reports",   "📈", "Reports"],
@@ -1862,7 +2373,7 @@ window.SHOP = {
     ["settings",  "⚙",  "Settings"],
   ];
   const TABS = [["dashboard", "▦", "Dashboard"], ["till", "🛒", "Sale"],
-                ["products", "📦", "Products"], ["customers", "👥", "Customers"],
+                ["dues", "📕", "Dues"], ["products", "📦", "Products"],
                 ["more", "☰", "More"]];
 
   App.buildRail = function () {
@@ -1895,6 +2406,8 @@ window.SHOP = {
         ? "অফলাইন · নেট লাগে না" : "" }),
     ]));
 
+    App.buildTools();
+
     const tabbar = $("#tabbar");
     clear(tabbar);
     TABS.forEach(function (n) {
@@ -1912,6 +2425,7 @@ window.SHOP = {
 
   App.navBadge = function (key) {
     if (key === "products") { const n = App.eng.lowStock().length; return n ? n : 0; }
+    if (key === "dues") { const n = App.eng.dueCustomers().length; return n ? n : 0; }
     return 0;
   };
 
@@ -3256,6 +3770,340 @@ window.SHOP = {
 </script>
 <script>
 /* =================================================================
+   বাকি — the credit book, on a screen of its own.
+
+   This is the screen a shopkeeper opens most, so it is built around
+   one question asked one way: type a number, see the person, see what
+   they owe, take the money or send the reminder.  Everything else on
+   the page is secondary to that box.
+   ================================================================= */
+(function (root) {
+  "use strict";
+  const A = root.App, el = A.el, T = root.T;
+
+  function ageChip(days) {
+    if (!days) return null;
+    const cls = days >= 60 ? "chip-bad" : days >= 30 ? "chip-warn" : "chip-ok";
+    const n = root.isBn() ? root.bnDigits(String(days)) : String(days);
+    return el("span", { class: "chip " + cls,
+      text: n + " " + (root.isBn() ? "দিন" : "days") });
+  }
+
+  function reminderFor(p) {
+    return A.eng.reminderText(p.row, root.isBn() ? "bn" : "en");
+  }
+
+  function waPhone(c) { return c.whatsapp || c.phone || ""; }
+
+  /* ------------------------------------------------------ action row */
+  function actions(p, opts) {
+    opts = opts || {};
+    const c = p.row;
+    const text = reminderFor(p);
+    const wa = waPhone(c);
+    const size = opts.small ? " btn-sm" : "";
+    const box = el("div", { class: "row", style: { gap: "8px" } });
+
+    box.appendChild(el("button", {
+      class: "btn btn-pri" + size,
+      text: "＋ " + (root.isBn() ? "টাকা জমা নিন" : "Take payment"),
+      onclick: function (e) { e.stopPropagation(); A.settleDue(c); },
+    }));
+
+    if (wa) {
+      box.appendChild(el("a", {
+        class: "btn btn-ok" + size, href: A.eng.waLink(wa, text),
+        target: "_blank", rel: "noopener",
+        text: "⟳ WhatsApp",
+        onclick: function (e) { e.stopPropagation(); },
+      }));
+    }
+    if (c.phone) {
+      box.appendChild(el("a", {
+        class: "btn" + size, href: A.eng.smsLink(c.phone, text),
+        text: "✉ SMS", onclick: function (e) { e.stopPropagation(); },
+      }));
+      box.appendChild(el("a", {
+        class: "btn" + size, href: "tel:" + String(c.phone).replace(/[^\d+]/g, ""),
+        text: "☎ " + (root.isBn() ? "কল" : "Call"),
+        onclick: function (e) { e.stopPropagation(); },
+      }));
+    }
+    if (!wa && !c.phone) {
+      box.appendChild(el("span", { class: "chip chip-warn",
+        text: root.isBn() ? "নম্বর নেই" : "no number" }));
+    }
+    return box;
+  }
+
+  /* ------------------------------------------------- one person, full */
+  function personCard(p) {
+    const c = p.row;
+    const card = el("div", { class: "card duecard" });
+
+    card.appendChild(el("div", { class: "duecard-head" }, [
+      el("div", { class: "avatar", text: (c.name || "?").trim().charAt(0) }),
+      el("div", { class: "grow" }, [
+        el("div", { class: "duecard-name", text: c.name || "—" }),
+        el("div", { class: "small muted", text: [c.phone, c.address]
+          .filter(Boolean).join(" · ") || (root.isBn() ? "নম্বর দেওয়া নেই" : "no phone") }),
+      ]),
+      el("div", { class: "right" }, [
+        el("div", { class: "tiny faint up", text: T("Due") }),
+        el("div", { class: "duecard-amt", text: A.money(p.due) }),
+        p.days ? el("div", { style: { marginTop: "4px" } }, [ageChip(p.days)]) : null,
+      ]),
+    ]));
+
+    card.appendChild(el("div", { class: "duecard-body" }, [
+      el("div", { class: "row minirow" }, [
+        el("div", { class: "mini" }, [
+          el("div", { class: "tiny faint up", text: root.isBn() ? "মোট বাকিতে নিয়েছে" : "Charged" }),
+          el("div", { class: "mini-v", text: A.money(p.charged) }),
+        ]),
+        el("div", { class: "mini" }, [
+          el("div", { class: "tiny faint up", text: root.isBn() ? "মোট শোধ করেছে" : "Paid" }),
+          el("div", { class: "mini-v", text: A.money(p.paid) }),
+        ]),
+        el("div", { class: "mini" }, [
+          el("div", { class: "tiny faint up", text: root.isBn() ? "শেষ বাকি" : "Last credit" }),
+          el("div", { class: "mini-v small",
+            text: p.last_sale ? A.dateText(p.last_sale) : "—" }),
+        ]),
+        el("div", { class: "mini" }, [
+          el("div", { class: "tiny faint up", text: root.isBn() ? "শেষ জমা" : "Last payment" }),
+          el("div", { class: "mini-v small",
+            text: p.last_paid ? A.dateText(p.last_paid) : "—" }),
+        ]),
+      ]),
+      el("div", { style: { marginTop: "14px" } }, [actions(p)]),
+    ]));
+
+    /* ---- the ledger: every credit and every payment, oldest first ---- */
+    const led = p.ledger.slice().reverse();
+    if (led.length) {
+      card.appendChild(el("div", { class: "duecard-led" }, [
+        el("div", { class: "spread", style: { marginBottom: "8px" } }, [
+          el("strong", { class: "small", text: root.isBn() ? "খাতা" : "Ledger" }),
+          el("button", { class: "btn btn-sm", text: "⇩ " + T("Excel"),
+            onclick: function () {
+              A.xlsx((c.name || "customer") + " — " + T("Due"),
+                [[T("Date"), root.isBn() ? "কী" : "Entry", root.isBn() ? "বিবরণ" : "Detail",
+                  root.isBn() ? "বাকি নিল" : "Credit", root.isBn() ? "জমা দিল" : "Paid",
+                  root.isBn() ? "অবশিষ্ট" : "Balance"]]
+                .concat(p.ledger.map(function (e) {
+                  return [e.day, e.kind === "sale" ? "Credit" : "Payment",
+                          e.label + (e.note ? " · " + e.note : ""),
+                          e.kind === "sale" ? e.amount : "",
+                          e.kind === "payment" ? e.amount : "", e.balance];
+                })), "due-" + (c.phone || c.id));
+            } }),
+        ]),
+        el("div", { class: "scroll-x" }, [
+          el("table", { class: "tbl" }, [
+            el("thead", {}, [el("tr", {}, [
+              el("th", { text: T("Date") }),
+              el("th", { text: root.isBn() ? "বিবরণ" : "Detail" }),
+              el("th", { class: "right", text: root.isBn() ? "বাকি" : "Credit" }),
+              el("th", { class: "right", text: root.isBn() ? "জমা" : "Paid" }),
+              el("th", { class: "right", text: root.isBn() ? "অবশিষ্ট" : "Balance" }),
+            ])]),
+            el("tbody", {}, led.map(function (e) {
+              return el("tr", {}, [
+                el("td", { class: "nowrap small", text: A.dateText(e.day) }),
+                el("td", {}, [
+                  el("span", { class: "chip " + (e.kind === "sale" ? "chip-warn" : "chip-ok"),
+                    text: e.kind === "sale"
+                      ? (root.isBn() ? "বাকিতে বিক্রি" : "Credit sale")
+                      : (root.isBn() ? "টাকা জমা" : "Payment") }),
+                  el("span", { class: "tiny faint",
+                    style: { marginInlineStart: "8px" },
+                    text: e.label + (e.note ? " · " + e.note : "") }),
+                ]),
+                el("td", { class: "right nowrap",
+                  text: e.kind === "sale" ? A.money(e.amount) : "" }),
+                el("td", { class: "right nowrap ok-t",
+                  text: e.kind === "payment" ? A.money(e.amount) : "" }),
+                el("td", { class: "right nowrap strong", text: A.money(e.balance) }),
+              ]);
+            })),
+          ]),
+        ]),
+      ]));
+    }
+    return card;
+  }
+
+  /* ------------------------------------------------------ list row */
+  function listRow(p, onOpen) {
+    const c = p.row;
+    return el("button", { class: "duerow", onclick: function () { onOpen(p); } }, [
+      el("span", { class: "avatar sm", text: (c.name || "?").trim().charAt(0) }),
+      el("span", { class: "grow" }, [
+        el("span", { class: "duerow-name", text: c.name || "—" }),
+        el("span", { class: "tiny faint", text: c.phone || "" }),
+      ]),
+      p.days ? el("span", { class: "only-wide" }, [ageChip(p.days)]) : null,
+      el("span", { class: "duerow-amt", text: A.money(p.due) }),
+      el("span", { class: "duerow-go", text: "›" }),
+    ]);
+  }
+
+  /* ========================================================= screen */
+  A.register("dues", function (page) {
+    const e = A.eng;
+    let query = A.params.q || "";
+    let sort = "amount";
+    let open = null;               // the person whose full card is showing
+
+    const sum = e.dueSummary();
+
+    /* ---- the search box: the point of the screen ---- */
+    const hero = el("div", { class: "card searchhero first" });
+    const box = A.field("", {
+      placeholder: root.isBn()
+        ? "🔍  নম্বর বা নাম লিখুন — কত বাকি দেখুন"
+        : "🔍  Type a number or name",
+      wide: true, value: query, inputmode: "tel",
+    });
+    box.input.classList.add("bigsearch");
+    box.input.addEventListener("input", function () {
+      query = box.val(); open = null; draw();
+    });
+    hero.appendChild(box);
+    const clearBtn = el("button", {
+      class: "btn btn-ghost btn-icon", text: "✕", title: T("Close"),
+      onclick: function () { query = ""; box.input.value = ""; open = null;
+                             draw(); box.input.focus(); },
+    });
+    hero.appendChild(clearBtn);
+    page.appendChild(hero);
+
+    /* ---- head tiles ---- */
+    page.appendChild(el("div", { class: "grid tiles4" }, [
+      el("div", { class: "tile tile-hero" }, [
+        el("div", { class: "k", text: root.isBn() ? "মোট বাকি" : "Total outstanding" }),
+        el("div", { class: "v", text: A.money(sum.total) }),
+        el("div", { class: "s", text: (root.isBn()
+          ? (root.bnDigits(String(sum.people)) + " জনের কাছে")
+          : (sum.people + " people")) }),
+      ]),
+      el("div", { class: "tile" }, [
+        el("div", { class: "k", text: root.isBn() ? "এ মাসে আদায়" : "Collected this month" }),
+        el("div", { class: "v ok-t", text: A.money(sum.collected_month) }),
+      ]),
+      el("div", { class: "tile" }, [
+        el("div", { class: "k", text: root.isBn() ? "৩০+ দিনের পুরাতন" : "Older than 30 days" }),
+        el("div", { class: "v bad-t", text: A.money(sum.old30) }),
+        el("div", { class: "s", text: root.isBn()
+          ? (root.bnDigits(String(sum.people30)) + " জন")
+          : (sum.people30 + " people") }),
+      ]),
+      el("div", { class: "tile" }, [
+        el("div", { class: "k", text: root.isBn() ? "সবচেয়ে বেশি" : "Largest" }),
+        el("div", { class: "v", style: { fontSize: "1.25rem" },
+          text: sum.biggest ? (sum.biggest.row.name || "—") : "—" }),
+        el("div", { class: "s", text: sum.biggest ? A.money(sum.biggest.due) : "" }),
+      ]),
+    ]));
+
+    const body = el("div", { class: "stack", style: { marginTop: "var(--gap)" } });
+    page.appendChild(body);
+
+    function draw() {
+      A.clear(body);
+      clearBtn.classList.toggle("hide", !query);
+
+      /* a person is open — show only them, with a way back */
+      if (open) {
+        body.appendChild(el("button", { class: "btn btn-sm",
+          text: "‹ " + (root.isBn() ? "সবার তালিকা" : "All"),
+          onclick: function () { open = null; draw(); } }));
+        body.appendChild(personCard(e.dueProfile(open.row.id)));
+        return;
+      }
+
+      const matches = query ? e.dueCustomers({ search: query, sort: sort }) : null;
+
+      /* searching */
+      if (matches) {
+        if (!matches.length) {
+          /* maybe they exist but owe nothing — say so, don't just blank */
+          const any = e.customers(query);
+          body.appendChild(el("div", { class: "card card-pad empty" }, [
+            el("div", { class: "big", text: any.length ? "✓" : "🔍" }),
+            el("div", { text: any.length
+              ? (any[0].name + " — " + (root.isBn() ? "কোনো বাকি নেই" : "no due"))
+              : (root.isBn() ? "এই নামে বা নম্বরে কাউকে পাওয়া যায়নি"
+                             : "No one found") }),
+            any.length ? el("div", { class: "row center",
+              style: { justifyContent: "center", marginTop: "12px" } }, [
+              el("button", { class: "btn btn-sm",
+                text: root.isBn() ? "কাস্টমারের পাতায় দেখুন" : "Open in customers",
+                onclick: function () { A.go("customers"); } }),
+            ]) : null,
+          ]));
+          return;
+        }
+        if (matches.length === 1) { body.appendChild(personCard(matches[0])); return; }
+        body.appendChild(el("div", { class: "small muted",
+          text: (root.isBn() ? root.bnDigits(String(matches.length)) + " জন পাওয়া গেছে"
+                             : matches.length + " found") }));
+        const list = el("div", { class: "card duelist" });
+        matches.forEach(function (p) {
+          list.appendChild(listRow(p, function (x) { open = x; draw(); }));
+        });
+        body.appendChild(list);
+        return;
+      }
+
+      /* not searching — the whole book */
+      const all = e.dueCustomers({ sort: sort });
+      const bar = el("div", { class: "spread" }, [
+        el("div", { class: "seg" }, [
+          ["amount", root.isBn() ? "টাকা বেশি" : "Biggest"],
+          ["old", root.isBn() ? "পুরাতন আগে" : "Oldest"],
+          ["name", root.isBn() ? "নাম" : "Name"],
+        ].map(function (s) {
+          return el("button", { class: sort === s[0] ? "on" : "", text: s[1],
+            onclick: function () { sort = s[0]; draw(); } });
+        })),
+        el("button", { class: "btn btn-sm", text: "⇩ " + T("Excel"),
+          onclick: function () {
+            A.xlsx(root.isBn() ? "বাকির তালিকা" : "Due list",
+              [[T("Name"), T("Phone"), root.isBn() ? "বাকি" : "Due",
+                root.isBn() ? "কত দিনের" : "Days old",
+                root.isBn() ? "শেষ জমা" : "Last payment"]]
+              .concat(all.map(function (p) {
+                return [p.row.name, p.row.phone, p.due, p.days, p.last_paid];
+              })), "due-list");
+          } }),
+      ]);
+      body.appendChild(bar);
+
+      if (!all.length) {
+        body.appendChild(el("div", { class: "card card-pad empty" }, [
+          el("div", { class: "big", text: "✓" }),
+          el("div", { text: root.isBn() ? "কারও কাছে বাকি নেই" : "Nobody owes anything" }),
+        ]));
+        return;
+      }
+      const list = el("div", { class: "card duelist" });
+      all.forEach(function (p) {
+        list.appendChild(listRow(p, function (x) { open = x; draw(); }));
+      });
+      body.appendChild(list);
+    }
+
+    draw();
+    setTimeout(function () {
+      if (window.innerWidth > 900 && !query) box.input.focus();
+    }, 80);
+  });
+})(window);
+</script>
+<script>
+/* =================================================================
    Reports — daily, monthly, yearly, and every one of them downloadable.
    ================================================================= */
 (function (root) {
@@ -4215,7 +5063,9 @@ window.SHOP = {
         e.setting("lang", "bn"), function (v) {
           e.setSetting("lang", v); root.setLang(v); A.refresh();
         }),
-      segRow("Theme", [{ value: "light", label: T("Light") }, { value: "dark", label: T("Dark") }],
+      segRow("Theme", [{ value: "light", label: T("Light") },
+        { value: "dark", label: T("Dark") },
+        { value: "auto", label: root.isBn() ? "নিজে থেকে" : "Auto" }],
         e.setting("theme", "light"), function (v) {
           e.setSetting("theme", v); A.applyTheme(); A.refresh();
         }),
@@ -4224,12 +5074,26 @@ window.SHOP = {
         e.setting("text_size", "normal"), function (v) {
           e.setSetting("text_size", v); A.applyTheme(); A.refresh();
         }),
-      segRow("Colour", [{ value: "teal", label: "🟢" }, { value: "blue", label: "🔵" },
-        { value: "violet", label: "🟣" }, { value: "rose", label: "🔴" },
-        { value: "amber", label: "🟠" }, { value: "green", label: "🟩" }],
-        e.setting("accent", "teal"), function (v) {
-          e.setSetting("accent", v); A.applyTheme(); A.refresh();
+      segRow("Density", [{ value: "comfortable", label: root.isBn() ? "আরামদায়ক" : "Comfortable" },
+        { value: "compact", label: root.isBn() ? "ঘন" : "Compact" }],
+        e.setting("density", "comfortable"), function (v) {
+          e.setSetting("density", v); A.applyTheme(); A.refresh();
         }),
+      el("div", { class: "field" }, [
+        el("label", { text: T("Colour") }),
+        A.themeSwatches(),
+      ]),
+      el("div", { class: "field" }, [
+        el("label", { text: root.isBn() ? "অ্যাপ" : "App" }),
+        el("div", { class: "row" }, [
+          el("button", { class: "btn btn-pri",
+            text: "⬇ " + (root.isBn() ? "হোম স্ক্রিনে বসান" : "Install on this device"),
+            onclick: A.installApp }),
+        ]),
+        el("div", { class: "tiny faint", text: root.isBn()
+          ? "বসালে আইকন হবে, নেট ছাড়াই খুলবে"
+          : "Adds an icon and opens without internet" }),
+      ]),
     ]));
 
     // ---- receipt
@@ -4832,6 +5696,21 @@ window.SHOP = {
       });
     }).catch(function (err) { fatal(err.message); });
   }
+
+
+  // ---------------------------------------------------------- install
+  /* Chrome hands over a one-shot prompt object; iOS Safari hands over
+     nothing at all, so that one gets written instructions instead. */
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    A.installEvent = e;
+    if (A.refreshInstallBtn) A.refreshInstallBtn();
+  });
+  window.addEventListener("appinstalled", function () {
+    A.installEvent = null;
+    A.toast(root.isBn() ? "অ্যাপ ইনস্টল হয়েছে" : "App installed", "ok");
+    if (A.refreshInstallBtn) A.refreshInstallBtn();
+  });
 
   // Register the offline cache, but only when served over http(s):
   // opened straight off the disk as a file:// page there is no scope for
