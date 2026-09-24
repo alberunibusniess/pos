@@ -641,6 +641,35 @@ button.has-ico,a.has-ico{justify-content:center}
 .field-ico .ico-svg{width:19px;height:19px;stroke-width:2}
 .field-box:focus-within .field-ico{color:var(--pri)}
 
+
+/* -------------------------------------------------------- tables
+   `table.tbl th` sets its own text-align, which quietly out-ranked the
+   .right helper and left every number's heading sitting over the wrong
+   column.  Headings now follow their cells, and the columns that hold
+   numbers or buttons shrink to their content so the name column keeps
+   the slack instead of everything drifting apart. */
+table.tbl th.right,table.tbl td.right{text-align:right}
+table.tbl th.fit,table.tbl td.fit{width:1%;white-space:nowrap}
+table.tbl th.pad,table.tbl td.pad{padding-inline-end:22px}
+table.tbl td .btn + .btn{margin-inline-start:6px}
+
+/* ----------------------------------------------------- till adjust
+   One label per column, boxes all the same height, nothing floating
+   on its own line. */
+.adjrow{
+  display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:10px;
+  align-items:end;margin-top:12px;
+}
+.adjrow .field{min-width:0}
+.adjrow .disc{display:flex;gap:8px;align-items:stretch}
+.adjrow .disc .seg{flex:0 0 auto;padding:3px}
+.adjrow .disc .seg button{min-height:auto;align-self:stretch;padding:0 12px}
+.adjrow .disc .field{flex:1;min-width:0}
+@media (max-width:520px){
+  .adjrow{grid-template-columns:1fr 1fr}
+  .adjrow > :first-child{grid-column:1 / -1}
+}
+
 </style>
 </head>
 <body>
@@ -2335,13 +2364,35 @@ window.SHOP = {
     opts = opts || {};
     const tag = opts.type === "textarea" ? "textarea"
               : opts.type === "select" ? "select" : "input";
+    /* A number box is drawn as a text box with a numeric keypad.
+       type="number" refuses setSelectionRange, so a screen that redraws
+       while you type cannot put the caret back and every digit lands in
+       front of the last one — 2000 typed out as 0002.  inputmode still
+       brings up the digits-only keyboard on a phone. */
+    const numeric = opts.type === "number";
     const input = el(tag, { class: "inp",
-      type: tag === "input" ? (opts.type || "text") : null,
+      type: tag === "input" ? (numeric ? "text" : (opts.type || "text")) : null,
       placeholder: opts.placeholder || "", value: opts.value !== undefined ? opts.value : "",
-      inputmode: opts.inputmode || null, step: opts.step || null,
+      inputmode: opts.inputmode || (numeric ? "decimal" : null),
+      step: opts.step || null,
       min: opts.min !== undefined ? opts.min : null,
       accept: opts.accept || null, id: opts.id || null });
     if (tag === "textarea" && opts.value) input.value = opts.value;
+    if (opts.key) input.dataset.k = opts.key;
+    if (numeric) {
+      input.setAttribute("autocomplete", "off");
+      // keep it a number without fighting a half-typed one like "7."
+      input.addEventListener("input", function () {
+        const clean = input.value.replace(/[^\d.\-]/g, "")
+          .replace(/(?!^)-/g, "")
+          .replace(/^(-?\d*\.\d*).*$/, "$1");
+        if (clean !== input.value) {
+          const at = input.selectionStart;
+          input.value = clean;
+          try { input.setSelectionRange(at - 1, at - 1); } catch (err) {}
+        }
+      }, true);
+    }
     if (tag === "select" && opts.options) {
       opts.options.forEach(function (o) {
         const v = typeof o === "string" ? o : o.value;
@@ -2456,6 +2507,34 @@ window.SHOP = {
     return wrap;
   };
 
+
+
+  // ------------------------------------------------------ focus keeping
+  /** Redraw a screen without closing the phone's keyboard.
+   *
+   *  A mobile browser hides the keyboard the instant the focused input
+   *  leaves the document.  A screen that rebuilds itself on every
+   *  keystroke therefore lets the shopkeeper type exactly one character
+   *  at a time — which is what "2000" turning into "2" felt like.
+   *  Each live field carries a key, so after the rebuild the field with
+   *  the same key can take the focus back, caret position and all. */
+  App.keepFocus = function (redraw) {
+    const live = document.activeElement;
+    const key = live && live.dataset ? live.dataset.k : null;
+    let start = null, end = null;
+    if (key) {
+      // a number input throws on selectionStart in some browsers
+      try { start = live.selectionStart; end = live.selectionEnd; } catch (err) {}
+    }
+    redraw();
+    if (!key) return;
+    const next = document.querySelector('[data-k="' + key + '"]');
+    if (!next || next === document.activeElement) return;
+    try { next.focus({ preventScroll: true }); } catch (err) { next.focus(); }
+    if (start !== null) {
+      try { next.setSelectionRange(start, end); } catch (err) {}
+    }
+  };
 
   // ------------------------------------------------------------ icons
   /** A drawn icon set instead of emoji.
@@ -2580,19 +2659,60 @@ window.SHOP = {
       });
       return;
     }
-    // No prompt on offer — say plainly how this browser does it.
+    // No prompt on offer — say plainly why, rather than giving steps
+    // that cannot work here.
     const ios = App.isIOS();
     const bn = root.isBn();
-    const steps = ios
-      ? (bn ? ["নিচে (বা উপরে) শেয়ার বাটন ⬆ চাপুন",
-               "লিস্ট থেকে “Add to Home Screen” বাছুন",
-               "উপরে ডানে “Add” চাপুন"]
-            : ["Tap the Share button", "Choose “Add to Home Screen”", "Tap “Add”"])
-      : (bn ? ["ব্রাউজারের উপরে ডানে ⋮ (তিন ফোঁটা) চাপুন",
-               "“Install app” বা “Add to Home screen” বাছুন",
-               "“Install” চাপুন"]
-            : ["Open the browser menu (⋮)", "Choose “Install app”", "Tap Install"]);
+    const fromFile = location.protocol === "file:";
     const m = App.modal({ title: bn ? "অ্যাপ হিসেবে বসান" : "Install the app" });
+
+    if (App.isStandalone()) {
+      m.body.appendChild(el("p", { class: "muted", style: { marginTop: 0 },
+        text: bn ? "এটা তো ইতিমধ্যেই অ্যাপ হিসেবেই চলছে।"
+                 : "This is already running as an installed app." }));
+      m.footer.appendChild(el("button", { class: "btn btn-pri", text: root.T("Close"),
+        onclick: m.close }));
+      return;
+    }
+
+    if (fromFile) {
+      /* A page opened straight off the disk has no address of its own, so
+         no browser will install it.  Saying so is more use than three
+         steps that lead nowhere. */
+      m.body.appendChild(el("p", { style: { marginTop: 0 },
+        text: bn
+          ? "এই ফাইলটা ফোনের ভিতর থেকে খোলা হয়েছে, তাই ব্রাউজার একে অ্যাপ হিসেবে বসাতে পারে না। হিসাব ঠিকঠাক জমা থাকবে, শুধু আলাদা আইকন হবে না।"
+          : "This copy was opened from a file on the device, so the browser cannot install it. Your data is still saved — only the app icon is missing." }));
+      m.body.appendChild(el("p", { class: "muted small",
+        style: { marginTop: "12px" },
+        text: bn
+          ? "যিনি আপনাকে ফাইলটা দিয়েছেন, তাঁর কাছে একটা লিংকও থাকতে পারে। লিংক দিয়ে একবার খুললে হোম স্ক্রিনে আইকন বসানো যায়, আর তারপর নেট ছাড়াই চলে।"
+          : "Whoever gave you this file may also have a link. Opened once from a link, it can be installed and then works offline." }));
+      const ol = el("ol", { class: "steps" });
+      (bn ? ["ব্রাউজারের মেনু (⋮) খুলুন",
+             "\u201cAdd to Home screen\u201d চাপুন — শর্টকাট তৈরি হবে",
+             "এরপর ওই আইকনে চাপলেই সরাসরি খুলবে"]
+          : ["Open the browser menu (⋮)",
+             "Tap \u201cAdd to Home screen\u201d to make a shortcut",
+             "The icon then opens this file directly"])
+        .forEach(function (t) { ol.appendChild(el("li", { text: t })); });
+      m.body.appendChild(el("div", { class: "small muted", style: { marginTop: "14px" },
+        text: bn ? "শুধু একটা শর্টকাট চাইলে:" : "For a plain shortcut instead:" }));
+      m.body.appendChild(ol);
+      m.footer.appendChild(el("button", { class: "btn btn-pri", text: root.T("Close"),
+        onclick: m.close }));
+      return;
+    }
+
+    const steps = ios
+      ? (bn ? ["নিচে (বা উপরে) শেয়ার বাটন চাপুন",
+               "লিস্ট থেকে \u201cAdd to Home Screen\u201d বাছুন",
+               "উপরে ডানে \u201cAdd\u201d চাপুন"]
+            : ["Tap the Share button", "Choose \u201cAdd to Home Screen\u201d", "Tap \u201cAdd\u201d"])
+      : (bn ? ["ব্রাউজারের উপরে ডানে ⋮ (তিন ফোঁটা) চাপুন",
+               "\u201cInstall app\u201d বা \u201cAdd to Home screen\u201d বাছুন",
+               "\u201cInstall\u201d চাপুন"]
+            : ["Open the browser menu (⋮)", "Choose \u201cInstall app\u201d", "Tap Install"]);
     m.body.appendChild(el("p", { class: "muted", style: { marginTop: 0 },
       text: bn ? "বসালে হোম স্ক্রিনে আইকন হবে, ব্রাউজারের ঠিকানা লেখা থাকবে না, আর নেট ছাড়াই খুলবে।"
                : "It gets a home-screen icon, no address bar, and opens without internet." }));
@@ -3107,8 +3227,8 @@ window.SHOP = {
   const A = root.App, el = A.el, T = root.T;
   const r2 = root.POSEngine.helpers.r2;
 
-  const cart = { lines: [], customer: null, discount: 0, discountPct: false,
-                 tax: 0, delivery: 0, cash: "", mobile: "", wallet: "bKash", trx: "" };
+  const cart = { lines: [], customer: null, discount: "", discountPct: false,
+                 tax: "", delivery: "", cash: "", mobile: "", wallet: "bKash", trx: "" };
   A.cart = cart;
 
   function lineTotal(l) { return r2(Math.max(l.qty, 0) * Math.max(l.price, 0)); }
@@ -3117,12 +3237,14 @@ window.SHOP = {
     let subtotal = 0;
     cart.lines.forEach(function (l) { subtotal += lineTotal(l); });
     subtotal = r2(subtotal);
-    let disc = cart.discountPct ? r2(subtotal * cart.discount / 100) : r2(cart.discount);
+    const dNum = Math.max(parseFloat(cart.discount) || 0, 0);
+    let disc = cart.discountPct ? r2(subtotal * dNum / 100) : r2(dNum);
     disc = Math.min(Math.max(disc, 0), subtotal);
     const taxable = r2(subtotal - disc);
-    const taxPct = Math.max(cart.tax, 0);          // a negative tax is a discount in disguise
+    // a negative tax is a discount in disguise
+    const taxPct = Math.max(parseFloat(cart.tax) || 0, 0);
     const taxAmt = r2(taxable * taxPct / 100);
-    const delivery = Math.max(cart.delivery, 0);
+    const delivery = Math.max(parseFloat(cart.delivery) || 0, 0);
     const grand = r2(taxable + taxAmt + delivery);
     const cash = Math.max(parseFloat(cart.cash) || 0, 0);
     const mobile = Math.max(parseFloat(cart.mobile) || 0, 0);
@@ -3252,7 +3374,7 @@ window.SHOP = {
     cartBox.appendChild(lines);
 
     // ---- adjustments
-    const adj = el("div", { class: "row", style: { marginTop: "10px", gap: "8px" } });
+    const adj = el("div", { class: "adjrow" });
     const dType = el("div", { class: "seg" }, [
       el("button", { class: cart.discountPct ? "" : "on", text: A.sym(),
         onclick: function () { cart.discountPct = false; paint(); } }),
@@ -3260,20 +3382,25 @@ window.SHOP = {
         onclick: function () { cart.discountPct = true; paint(); } }),
     ]);
     const dInp = A.field(T("Discount"), { type: "number", inputmode: "decimal",
-      value: cart.discount || "", min: 0 });
-    dInp.input.addEventListener("input", function () { cart.discount = dInp.num(0); paint(); });
+      value: cart.discount, min: 0, key: "discount" });
+    dInp.input.addEventListener("input", function () {
+      cart.discount = dInp.input.value; paint(); });
     const tInp = A.field(T("Tax") + " %", { type: "number", inputmode: "decimal",
-      value: cart.tax || "", min: 0 });
-    tInp.input.addEventListener("input", function () { cart.tax = tInp.num(0); paint(); });
+      value: cart.tax, min: 0, key: "tax" });
+    tInp.input.addEventListener("input", function () {
+      cart.tax = tInp.input.value; paint(); });
     const vInp = A.field(T("Delivery"), { type: "number", inputmode: "decimal",
-      value: cart.delivery || "", min: 0 });
-    vInp.input.addEventListener("input", function () { cart.delivery = vInp.num(0); paint(); });
-    adj.appendChild(el("div", { class: "grow stack", style: { gap: "6px" } },
-      [el("label", { class: "tiny muted", text: T("Discount") }), dType]));
+      value: cart.delivery, min: 0, key: "delivery" });
+    vInp.input.addEventListener("input", function () {
+      cart.delivery = vInp.input.value; paint(); });
+    // the toggle belongs to the discount box, so they share one label
     dInp.querySelector("label").remove();
-    adj.appendChild(el("div", { class: "grow" }, [dInp]));
-    adj.appendChild(el("div", { class: "grow" }, [tInp]));
-    adj.appendChild(el("div", { class: "grow" }, [vInp]));
+    adj.appendChild(el("div", { class: "field" }, [
+      el("label", { text: T("Discount") }),
+      el("div", { class: "disc" }, [dType, dInp]),
+    ]));
+    adj.appendChild(tInp);
+    adj.appendChild(vInp);
     cartBox.appendChild(adj);
 
     // ---- totals
@@ -3293,10 +3420,10 @@ window.SHOP = {
 
     // ---- payment
     const cashInp = A.field(T("Cash received"), { type: "number", inputmode: "decimal",
-      value: cart.cash, min: 0 });
+      value: cart.cash, min: 0, key: "cash" });
     cashInp.input.addEventListener("input", function () { cart.cash = cashInp.input.value; paint(); });
     const mobInp = A.field(T("Mobile / bKash"), { type: "number", inputmode: "decimal",
-      value: cart.mobile, min: 0 });
+      value: cart.mobile, min: 0, key: "mobile" });
     mobInp.input.addEventListener("input", function () { cart.mobile = mobInp.input.value; paint(); });
     const pay = el("div", { class: "row", style: { marginTop: "12px", gap: "8px" } },
       [el("div", { class: "grow" }, [cashInp]), el("div", { class: "grow" }, [mobInp])]);
@@ -3306,7 +3433,8 @@ window.SHOP = {
       const w = A.field("", { type: "select", value: cart.wallet,
         options: root.POSEngine.WALLETS.concat(["Card", "Bank"]) });
       w.input.addEventListener("change", function () { cart.wallet = w.input.value; paint(); });
-      const trx = A.field("", { placeholder: T("TrxID"), value: cart.trx, wide: true });
+      const trx = A.field("", { placeholder: T("TrxID"), value: cart.trx, wide: true,
+        key: "trx" });
       trx.input.addEventListener("input", function () { cart.trx = trx.input.value; });
       cartBox.appendChild(el("div", { class: "row", style: { marginTop: "8px", gap: "8px" } },
         [el("div", { style: { width: "130px" } }, [w]), trx]));
@@ -3332,11 +3460,17 @@ window.SHOP = {
       text: "✓ " + T("Complete sale"), onclick: complete }));
   }
 
-  function paint() { if (picker) paintPicker(); if (cartBox) paintCart(); }
+  function paint() {
+    A.keepFocus(function () {
+      if (picker) paintPicker();
+      if (cartBox) paintCart();
+    });
+  }
 
   function reset() {
-    cart.lines = []; cart.customer = null; cart.discount = 0; cart.discountPct = false;
-    cart.tax = A.eng.settingFloat("default_tax", 0); cart.delivery = 0;
+    cart.lines = []; cart.customer = null; cart.discount = ""; cart.discountPct = false;
+    const dTax = A.eng.settingFloat("default_tax", 0);
+    cart.tax = dTax ? String(dTax) : ""; cart.delivery = "";
     cart.cash = ""; cart.mobile = ""; cart.trx = "";
   }
 
@@ -3473,7 +3607,10 @@ window.SHOP = {
 
   // ------------------------------------------------------------- view
   A.register("till", function (page) {
-    if (cart.tax === 0 && !cart.lines.length) cart.tax = A.eng.settingFloat("default_tax", 0);
+    if (cart.tax === "" && !cart.lines.length) {
+      const d = A.eng.settingFloat("default_tax", 0);
+      cart.tax = d ? String(d) : "";
+    }
     const wrap = el("div", { class: "till" });
     const left = el("div", { class: "stack" });
     const right = el("div", { class: "card card-pad" });
@@ -3750,17 +3887,18 @@ window.SHOP = {
       }
       const tbl = el("table", { class: "tbl" });
       tbl.appendChild(el("thead", {}, [el("tr", {}, [
-        el("th", { text: "" }), el("th", { text: T("Name") }),
-        el("th", { text: T("Stock") }), el("th", { class: "right", text: T("Cost") }),
-        el("th", { class: "right", text: T("Price") }),
-        el("th", { class: "right", text: T("Actions") }),
+        el("th", { class: "fit", text: "" }), el("th", { text: T("Name") }),
+        el("th", { class: "fit", text: T("Stock") }),
+        el("th", { class: "fit right pad", text: T("Cost") }),
+        el("th", { class: "fit right pad", text: T("Price") }),
+        el("th", { class: "fit right", text: T("Actions") }),
       ])]));
       const body = el("tbody");
       rows.forEach(function (p) {
         const url = p.photo_id ? A.photoUrl(p.photo_id) : null;
         const low = Number(p.low_stock_at) > 0 && Number(p.stock) <= Number(p.low_stock_at);
         body.appendChild(el("tr", {}, [
-          el("td", { style: { width: "56px" } }, [
+          el("td", { class: "fit" }, [
             url ? el("img", { src: url, alt: "", style: { width: "40px", height: "40px",
               borderRadius: "8px", objectFit: "cover" } })
                 : el("div", { style: { width: "40px", height: "40px", borderRadius: "8px",
@@ -3770,11 +3908,12 @@ window.SHOP = {
             el("div", { style: { fontWeight: "700" }, text: p.name }),
             el("div", { class: "tiny faint", text: [p.category, p.sku].filter(Boolean).join(" · ") }),
           ]),
-          el("td", {}, [el("span", { class: "chip " + (low ? "chip-warn" : ""),
+          el("td", { class: "fit" }, [el("span", { class: "chip " + (low ? "chip-warn" : ""),
             text: A.qty(p.stock) + " " + (p.unit || "") })]),
-          el("td", { class: "right muted", text: A.money(p.cost_price) }),
-          el("td", { class: "right", style: { fontWeight: "700" }, text: A.money(p.sale_price) }),
-          el("td", { class: "right nowrap" }, [
+          el("td", { class: "fit right pad muted", text: A.money(p.cost_price) }),
+          el("td", { class: "fit right pad", style: { fontWeight: "700" },
+            text: A.money(p.sale_price) }),
+          el("td", { class: "fit right nowrap" }, [
             el("button", { class: "btn btn-sm", text: "＋", title: T("Restock"),
               onclick: function () { A.restock(p); } }),
             el("button", { class: "btn btn-sm", text: "✎", title: T("Edit"),
@@ -4463,16 +4602,28 @@ window.SHOP = {
   function monthKey(s) { return String(s).slice(0, 7); }
   function yearKey(s) { return String(s).slice(0, 4); }
 
+  /** The month in the language the rest of the page is in — an English
+   *  month beside a Bengali year reads like a bug, because it is one. */
+  function monthName(d) {
+    const bn = ["জানুয়ারি","ফেব্রুয়ারি","মার্চ","এপ্রিল","মে","জুন",
+                "জুলাই","আগস্ট","সেপ্টেম্বর","অক্টোবর","নভেম্বর","ডিসেম্বর"];
+    if (!root.isBn()) {
+      return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    }
+    return bn[d.getMonth()] + " " + root.bnDigits(String(d.getFullYear()));
+  }
+
   function rangeFor(mode, anchor) {
     const d = anchor ? new Date(anchor) : new Date();
     if (mode === "daily") {
       const start = new Date(d.getFullYear(), d.getMonth(), 1);
       return { start: dayKey(start), end: dayKey(new Date(d.getFullYear(), d.getMonth() + 1, 0)),
-               label: d.toLocaleDateString("en-US", { month: "long", year: "numeric" }) };
+               label: monthName(d) };
     }
     if (mode === "monthly") {
       return { start: d.getFullYear() + "-01-01", end: d.getFullYear() + "-12-31",
-               label: String(d.getFullYear()) };
+               label: root.isBn() ? root.bnDigits(String(d.getFullYear()))
+                                  : String(d.getFullYear()) };
     }
     return { start: "1970-01-01", end: "2999-12-31",
              label: root.isBn() ? "সব বছর" : "All years" };
