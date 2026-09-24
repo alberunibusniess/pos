@@ -289,6 +289,7 @@ table.tbl tbody tr:hover{background:var(--surface2)}
   .modal > footer .btn{min-width:0}
 }
 @media (min-width:901px){ .only-phone{display:none !important} }
+@media (min-width:641px){ table.tbl td.c-name .tiny{display:none} }
 
 @media print{
   body{background:#fff}
@@ -668,6 +669,83 @@ table.tbl td .btn + .btn{margin-inline-start:6px}
 @media (max-width:520px){
   .adjrow{grid-template-columns:1fr 1fr}
   .adjrow > :first-child{grid-column:1 / -1}
+}
+
+
+/* ------------------------------------------------------- toolbars
+   A search box next to a row of buttons.  The box used to be allowed
+   to shrink to nothing on a phone, which is how a button ended up
+   sitting on top of it: give it a floor, and let the buttons wrap
+   underneath instead of fighting for the same line. */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar > .field{flex:1 1 200px;min-width:160px}
+.toolbar > .btn{flex:0 0 auto}
+@media (max-width:640px){
+  .toolbar > .field{flex:1 1 100%;min-width:0}
+  .toolbar > .btn{flex:1 1 auto;justify-content:center}
+}
+
+/* ---------------------------------------------------- reports head */
+.repbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.repbar > .seg{flex:0 1 auto;min-width:0}
+.repbar .stepper{
+  display:flex;align-items:center;gap:6px;flex:1 1 190px;min-width:0;
+  justify-content:center;
+}
+.repbar .stepper .lbl{
+  flex:1;min-width:0;text-align:center;font-size:1rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.repbar > .btn{flex:0 0 auto}
+@media (max-width:760px){
+  .repbar{flex-direction:column;align-items:stretch}
+  .repbar > .seg{width:100%}
+  .repbar > .seg button{flex:1;padding:0 8px}
+  .repbar .stepper{width:100%}
+  .repbar > .btn{width:100%;justify-content:center}
+}
+
+.datepick{
+  margin-top:var(--gap);padding:var(--pad);
+  background:var(--surface);border:1px solid var(--hair);
+  border-radius:var(--r);box-shadow:var(--shadow);
+}
+.datepick .field{flex:1 1 150px;min-width:0}
+.datepick .btn{flex:1 1 auto;justify-content:center}
+
+
+/* On a phone the photo and the cost price are the first things a
+   shopkeeper can do without — dropping them keeps the name, the stock
+   and the selling price on one screen instead of three wrapped lines. */
+@media (max-width:640px){
+  table.tbl .col-photo,table.tbl .col-cost{display:none}
+  table.tbl th,table.tbl td{padding:10px 8px}
+  table.tbl th.pad,table.tbl td.pad{padding-inline-end:10px}
+}
+
+
+/* A table with four columns and three buttons does not fit a phone.
+   Below 640 the rows become little cards instead: name and price on
+   the top line, stock and the buttons underneath. */
+@media (max-width:640px){
+  table.tbl-cards thead{display:none}
+  table.tbl-cards,table.tbl-cards tbody,table.tbl-cards tr,
+  table.tbl-cards td{display:block;width:auto}
+  table.tbl-cards tr{
+    display:grid;grid-template-columns:1fr auto;gap:8px 10px;align-items:center;
+    padding:12px 14px;border-bottom:1px solid var(--hair);
+  }
+  table.tbl-cards tr:last-child{border-bottom:0}
+  table.tbl-cards tr:hover{background:transparent}
+  table.tbl-cards td{padding:0;border:0}
+  table.tbl-cards td.c-name{grid-column:1;grid-row:1;min-width:0}
+  table.tbl-cards td.c-price{grid-column:2;grid-row:1;text-align:right;font-size:1.05rem}
+  table.tbl-cards td.c-stock{grid-column:1;grid-row:2}
+  table.tbl-cards td.c-act{grid-column:2;grid-row:2;text-align:right;white-space:nowrap}
+  table.tbl-cards td.c-act .btn{min-height:38px;width:38px;padding:0}
+  table.tbl-cards td.c-act .btn + .btn{margin-inline-start:6px}
+  /* the phone number already sits under the name on a card */
+  table.tbl-cards td.c-hide-phone{display:none}
 }
 
 </style>
@@ -3629,7 +3707,7 @@ window.SHOP = {
       if (hit) { addProduct(hit, 1); search.input.value = ""; state.search = ""; paintPicker(); }
       else A.toast(root.isBn() ? "এই কোডে পণ্য পাওয়া যায়নি" : "No product for that code", "warn");
     });
-    left.appendChild(el("div", { class: "card card-pad row", style: { gap: "8px" } }, [
+    left.appendChild(el("div", { class: "card card-pad toolbar" }, [
       search,
       el("button", { class: "btn btn-sm", text: "✚ " + T("Quick item"), onclick: quickItem }),
     ]));
@@ -3856,7 +3934,7 @@ window.SHOP = {
   // -------------------------------------------------------------- view
   A.register("products", function (page) {
     let search = (A.params && A.params.search) || "";
-    const bar = el("div", { class: "card card-pad row", style: { gap: "8px" } });
+    const bar = el("div", { class: "card card-pad toolbar" });
     const box = A.field("", { placeholder: "🔍 " + T("Search"), value: search, wide: true });
     box.input.addEventListener("input", function () { search = box.val(); draw(); });
     bar.appendChild(box);
@@ -3885,11 +3963,11 @@ window.SHOP = {
           el("div", { text: T("Nothing here yet") })]));
         return;
       }
-      const tbl = el("table", { class: "tbl" });
+      const tbl = el("table", { class: "tbl tbl-cards" });
       tbl.appendChild(el("thead", {}, [el("tr", {}, [
-        el("th", { class: "fit", text: "" }), el("th", { text: T("Name") }),
+        el("th", { class: "fit col-photo", text: "" }), el("th", { text: T("Name") }),
         el("th", { class: "fit", text: T("Stock") }),
-        el("th", { class: "fit right pad", text: T("Cost") }),
+        el("th", { class: "fit right pad col-cost", text: T("Cost") }),
         el("th", { class: "fit right pad", text: T("Price") }),
         el("th", { class: "fit right", text: T("Actions") }),
       ])]));
@@ -3898,22 +3976,22 @@ window.SHOP = {
         const url = p.photo_id ? A.photoUrl(p.photo_id) : null;
         const low = Number(p.low_stock_at) > 0 && Number(p.stock) <= Number(p.low_stock_at);
         body.appendChild(el("tr", {}, [
-          el("td", { class: "fit" }, [
+          el("td", { class: "fit col-photo" }, [
             url ? el("img", { src: url, alt: "", style: { width: "40px", height: "40px",
               borderRadius: "8px", objectFit: "cover" } })
                 : el("div", { style: { width: "40px", height: "40px", borderRadius: "8px",
               background: "var(--surface3)", display: "grid", placeItems: "center" },
               text: "📦" })]),
-          el("td", {}, [
+          el("td", { class: "c-name" }, [
             el("div", { style: { fontWeight: "700" }, text: p.name }),
             el("div", { class: "tiny faint", text: [p.category, p.sku].filter(Boolean).join(" · ") }),
           ]),
-          el("td", { class: "fit" }, [el("span", { class: "chip " + (low ? "chip-warn" : ""),
+          el("td", { class: "fit c-stock" }, [el("span", { class: "chip " + (low ? "chip-warn" : ""),
             text: A.qty(p.stock) + " " + (p.unit || "") })]),
-          el("td", { class: "fit right pad muted", text: A.money(p.cost_price) }),
-          el("td", { class: "fit right pad", style: { fontWeight: "700" },
+          el("td", { class: "fit right pad muted col-cost", text: A.money(p.cost_price) }),
+          el("td", { class: "fit right pad c-price", style: { fontWeight: "700" },
             text: A.money(p.sale_price) }),
-          el("td", { class: "fit right nowrap" }, [
+          el("td", { class: "fit right nowrap c-act" }, [
             el("button", { class: "btn btn-sm", text: "＋", title: T("Restock"),
               onclick: function () { A.restock(p); } }),
             el("button", { class: "btn btn-sm", text: "✎", title: T("Edit"),
@@ -4010,7 +4088,7 @@ window.SHOP = {
 
   A.register("customers", function (page) {
     let search = "";
-    const bar = el("div", { class: "card card-pad row", style: { gap: "8px" } });
+    const bar = el("div", { class: "card card-pad toolbar" });
     const box = A.field("", { placeholder: "🔍 " + T("Search"), wide: true });
     box.input.addEventListener("input", function () { search = box.val(); draw(); });
     bar.appendChild(box);
@@ -4041,23 +4119,26 @@ window.SHOP = {
       if (!rows.length) return card.appendChild(el("div", { class: "empty" }, [
         el("div", { class: "big", text: "👥" }), el("div", { text: T("Nothing here yet") })]));
       const tbl = el("table", { class: "tbl" });
+      tbl.className = "tbl tbl-cards";
       tbl.appendChild(el("thead", {}, [el("tr", {}, [
-        el("th", { text: T("Name") }), el("th", { text: T("Phone") }),
-        el("th", { class: "right", text: T("Due") }),
-        el("th", { class: "right", text: T("Actions") })])]));
+        el("th", { text: T("Name") }), el("th", { class: "fit", text: T("Phone") }),
+        el("th", { class: "fit right pad", text: T("Due") }),
+        el("th", { class: "fit right", text: T("Actions") })])]));
       const body = el("tbody");
       rows.forEach(function (c) {
         const owes = Number(c.due) > 0;
         const phone = c.whatsapp || c.phone;
         const text = A.eng.reminderText(c, root.isBn() ? "bn" : "en");
         body.appendChild(el("tr", {}, [
-          el("td", {}, [el("div", { style: { fontWeight: "700" }, text: c.name }),
-            c.address ? el("div", { class: "tiny faint", text: c.address }) : null]),
-          el("td", { class: "muted nowrap", text: c.phone || "" }),
-          el("td", { class: "right" }, [owes
+          el("td", { class: "c-name" }, [
+            el("div", { style: { fontWeight: "700" }, text: c.name }),
+            el("div", { class: "tiny faint",
+              text: [c.phone, c.address].filter(Boolean).join(" · ") })]),
+          el("td", { class: "fit muted nowrap c-hide-phone", text: c.phone || "" }),
+          el("td", { class: "fit right pad c-price" }, [owes
             ? el("span", { class: "chip chip-warn", text: A.money(c.due) })
             : el("span", { class: "faint", text: "—" })]),
-          el("td", { class: "right nowrap" }, [
+          el("td", { class: "fit right nowrap c-act" }, [
             owes && phone ? el("a", { class: "btn btn-sm btn-ok", text: "🟢",
               title: T("Remind on WhatsApp"), target: "_blank", rel: "noopener",
               href: A.eng.waLink(phone, text) }) : null,
@@ -4176,7 +4257,7 @@ window.SHOP = {
   A.buyStock = purchaseDialog;
 
   A.register("suppliers", function (page) {
-    const bar = el("div", { class: "card card-pad row", style: { gap: "8px" } });
+    const bar = el("div", { class: "card card-pad toolbar" });
     bar.appendChild(el("div", { class: "grow" }, [
       el("div", { class: "tiny faint", text: T("Payable to suppliers") }),
       el("strong", { style: { fontSize: "1.3rem",
@@ -4613,7 +4694,13 @@ window.SHOP = {
     return bn[d.getMonth()] + " " + root.bnDigits(String(d.getFullYear()));
   }
 
-  function rangeFor(mode, anchor) {
+  function rangeFor(mode, anchor, custom) {
+    if (mode === "custom") {
+      const from = (custom && custom.from) || dayKey(new Date());
+      const to = (custom && custom.to) || dayKey(new Date());
+      const a = from <= to ? from : to, b = from <= to ? to : from;
+      return { start: a, end: b, label: A.dateText(a) + " – " + A.dateText(b) };
+    }
     const d = anchor ? new Date(anchor) : new Date();
     if (mode === "daily") {
       const start = new Date(d.getFullYear(), d.getMonth(), 1);
@@ -4659,44 +4746,94 @@ window.SHOP = {
     let mode = "daily";
     let anchor = new Date();
 
-    const head = el("div", { class: "card card-pad row", style: { gap: "10px" } });
+    const custom = { from: dayKey(new Date()), to: dayKey(new Date()) };
+    const head = el("div", { class: "card card-pad repbar" });
     const seg = el("div", { class: "seg" });
-    const label = el("strong", { class: "nowrap" });
+    const label = el("strong", { class: "lbl" });
     const body = el("div", { style: { marginTop: "var(--gap)" } });
-    page.appendChild(head); page.appendChild(body);
+    page.appendChild(head);
 
-    ["daily", "monthly", "yearly"].forEach(function (m) {
-      seg.appendChild(el("button", { class: mode === m ? "on" : "",
-        text: T(m.charAt(0).toUpperCase() + m.slice(1)),
-        onclick: function () { mode = m; anchor = new Date(); draw(); } }));
+    const MODES = [["daily", root.isBn() ? "দৈনিক" : "Daily"],
+                   ["monthly", root.isBn() ? "মাসিক" : "Monthly"],
+                   ["yearly", root.isBn() ? "বার্ষিক" : "Yearly"],
+                   ["custom", root.isBn() ? "তারিখ ধরে" : "Pick dates"]];
+    MODES.forEach(function (m) {
+      seg.appendChild(el("button", { class: mode === m[0] ? "on" : "", text: m[1],
+        onclick: function () { mode = m[0]; anchor = new Date(); draw(); } }));
     });
     head.appendChild(seg);
-    head.appendChild(el("div", { class: "row grow", style: { gap: "6px",
-      justifyContent: "center" } }, [
-      el("button", { class: "btn btn-sm", text: "‹", onclick: function () {
-        if (mode === "daily") anchor.setMonth(anchor.getMonth() - 1);
-        else anchor.setFullYear(anchor.getFullYear() - 1);
-        draw();
-      } }),
+    const stepper = el("div", { class: "stepper" }, [
+      el("button", { class: "btn btn-sm btn-icon", text: "‹",
+        title: root.isBn() ? "আগের" : "Previous", onclick: function () {
+          if (mode === "daily") anchor.setMonth(anchor.getMonth() - 1);
+          else anchor.setFullYear(anchor.getFullYear() - 1);
+          draw();
+        } }),
       label,
-      el("button", { class: "btn btn-sm", text: "›", onclick: function () {
-        if (mode === "daily") anchor.setMonth(anchor.getMonth() + 1);
-        else anchor.setFullYear(anchor.getFullYear() + 1);
+      el("button", { class: "btn btn-sm btn-icon", text: "›",
+        title: root.isBn() ? "পরের" : "Next", onclick: function () {
+          if (mode === "daily") anchor.setMonth(anchor.getMonth() + 1);
+          else anchor.setFullYear(anchor.getFullYear() + 1);
+          draw();
+        } }),
+    ]);
+    head.appendChild(stepper);
+
+    /* Two dates and four shortcuts — most of the time the shopkeeper
+       wants "this month" or "last 7 days", not a calendar. */
+    const fromF = A.field(root.isBn() ? "থেকে" : "From",
+      { type: "date", value: custom.from, key: "rep-from" });
+    const toF = A.field(root.isBn() ? "পর্যন্ত" : "To",
+      { type: "date", value: custom.to, key: "rep-to" });
+    fromF.input.addEventListener("change", function () {
+      custom.from = fromF.input.value || custom.from; draw(); });
+    toF.input.addEventListener("change", function () {
+      custom.to = toF.input.value || custom.to; draw(); });
+
+    function shortcut(labelText, days, whole) {
+      return el("button", { class: "btn btn-sm", text: labelText, onclick: function () {
+        const now = new Date();
+        if (whole === "month") {
+          custom.from = dayKey(new Date(now.getFullYear(), now.getMonth(), 1));
+          custom.to = dayKey(now);
+        } else if (whole === "lastmonth") {
+          custom.from = dayKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+          custom.to = dayKey(new Date(now.getFullYear(), now.getMonth(), 0));
+        } else {
+          const back = new Date(now); back.setDate(back.getDate() - (days - 1));
+          custom.from = dayKey(back); custom.to = dayKey(now);
+        }
+        fromF.input.value = custom.from; toF.input.value = custom.to;
         draw();
-      } }),
-    ]));
+      } });
+    }
+    const picker = el("div", { class: "datepick" }, [
+      el("div", { class: "row", style: { gap: "10px" } }, [fromF, toF]),
+      el("div", { class: "row", style: { gap: "6px", marginTop: "10px" } }, [
+        shortcut(root.isBn() ? "আজ" : "Today", 1),
+        shortcut(root.isBn() ? "৭ দিন" : "7 days", 7),
+        shortcut(root.isBn() ? "এ মাসে" : "This month", 0, "month"),
+        shortcut(root.isBn() ? "গত মাস" : "Last month", 0, "lastmonth"),
+      ]),
+    ]);
+
     const dl = el("button", { class: "btn btn-sm btn-pri", text: "⇩ " + T("Excel") });
     head.appendChild(dl);
+    page.appendChild(picker);
+    page.appendChild(body);
 
     function draw() {
       A.$$(".seg button", head).forEach(function (b, i) {
-        b.className = ["daily", "monthly", "yearly"][i] === mode ? "on" : "";
+        b.className = MODES[i] && MODES[i][0] === mode ? "on" : "";
       });
-      const r = rangeFor(mode, anchor);
-      label.textContent = mode === "yearly" ? r.label
+      const pick = mode === "custom";
+      picker.classList.toggle("hide", !pick);
+      stepper.classList.toggle("hide", pick);
+      const r = rangeFor(mode, anchor, custom);
+      label.textContent = (mode === "yearly" || mode === "custom") ? r.label
         : (root.isBn() ? root.bnDigits(r.label) : r.label);
       const sales = A.eng.salesBetween(r.start, r.end);
-      const rows = bucket(mode, sales);
+      const rows = bucket(mode === "custom" ? "daily" : mode, sales);
 
       A.clear(body);
       const totals = rows.reduce(function (t, b) {
@@ -4737,7 +4874,7 @@ window.SHOP = {
         rows.forEach(function (b) {
           tb.appendChild(el("tr", {}, [
             el("td", { class: "nowrap", style: { fontWeight: "700" },
-              text: mode === "daily" ? A.dateText(b.key)
+              text: (mode === "daily" || mode === "custom") ? A.dateText(b.key)
                 : (root.isBn() ? root.bnDigits(b.key) : b.key) }),
             el("td", { class: "right", text: A.qty(b.orders) }),
             el("td", { class: "right", text: A.money(b.revenue) }),
