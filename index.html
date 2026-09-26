@@ -5930,6 +5930,15 @@ window.SHOP = {
     const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
     return { start: key + "-01", end: H.dayKey(last) };
   }
+  /** The span of the same length that ends the day before this one. */
+  function previousSpan(r) {
+    const a = new Date(r.start + "T00:00:00"), b = new Date(r.end + "T00:00:00");
+    const days = Math.round((b - a) / 86400000) + 1;
+    const end = new Date(a); end.setDate(end.getDate() - 1);
+    const start = new Date(end); start.setDate(start.getDate() - (days - 1));
+    return { start: H.dayKey(start), end: H.dayKey(end) };
+  }
+
   function shiftMonth(key, by) {
     const d = new Date(key + "-01T00:00:00");
     d.setMonth(d.getMonth() + by);
@@ -6127,15 +6136,67 @@ window.SHOP = {
         onclick: function () { tab = t[0]; draw(); } }));
     });
     head.appendChild(seg);
+
+    /* A month at a time is what a shopkeeper usually wants, but not
+       always — "কত গেল পুজোর সপ্তাহে" needs two dates.  Same control as
+       the reports screen, so it is learnt once. */
+    let custom = (A.params && A.params.custom) || null;   // {from,to} or null
     const label = el("strong", { class: "lbl" });
-    head.appendChild(el("div", { class: "stepper" }, [
+    const stepper = el("div", { class: "stepper" }, [
       el("button", { class: "btn btn-sm btn-icon", text: "‹",
         onclick: function () { month = shiftMonth(month, -1); draw(); } }),
       label,
       el("button", { class: "btn btn-sm btn-icon", text: "›",
         onclick: function () { month = shiftMonth(month, 1); draw(); } }),
-    ]));
+    ]);
+    head.appendChild(stepper);
+    const modeBtn = el("button", { class: "btn btn-sm", onclick: function () {
+      if (custom) custom = null;
+      else {
+        const b = monthBounds(month);
+        custom = { from: b.start, to: H.dayKey() < b.end ? H.dayKey() : b.end };
+      }
+      draw();
+    } });
+    head.appendChild(modeBtn);
     page.appendChild(head);
+
+    const fromF = A.field(L("থেকে", "From"), { type: "date", key: "exp-from" });
+    const toF = A.field(L("পর্যন্ত", "To"), { type: "date", key: "exp-to" });
+    fromF.input.addEventListener("change", function () {
+      if (custom) { custom.from = fromF.input.value || custom.from; draw(); } });
+    toF.input.addEventListener("change", function () {
+      if (custom) { custom.to = toF.input.value || custom.to; draw(); } });
+    function shortcut(text, days, whole) {
+      return el("button", { class: "btn btn-sm", text: text, onclick: function () {
+        const now = new Date();
+        if (whole === "month") {
+          custom = { from: H.dayKey(new Date(now.getFullYear(), now.getMonth(), 1)),
+                     to: H.dayKey(now) };
+        } else if (whole === "lastmonth") {
+          custom = { from: H.dayKey(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
+                     to: H.dayKey(new Date(now.getFullYear(), now.getMonth(), 0)) };
+        } else if (whole === "year") {
+          custom = { from: H.dayKey(new Date(now.getFullYear(), 0, 1)),
+                     to: H.dayKey(now) };
+        } else {
+          const back = new Date(now); back.setDate(back.getDate() - (days - 1));
+          custom = { from: H.dayKey(back), to: H.dayKey(now) };
+        }
+        draw();
+      } });
+    }
+    const picker = el("div", { class: "datepick" }, [
+      el("div", { class: "row", style: { gap: "10px" } }, [fromF, toF]),
+      el("div", { class: "row", style: { gap: "6px", marginTop: "10px" } }, [
+        shortcut(L("আজ", "Today"), 1),
+        shortcut(L("৭ দিন", "7 days"), 7),
+        shortcut(L("এ মাসে", "This month"), 0, "month"),
+        shortcut(L("গত মাস", "Last month"), 0, "lastmonth"),
+        shortcut(L("এ বছর", "This year"), 0, "year"),
+      ]),
+    ]);
+    page.appendChild(picker);
 
     const body = el("div", { style: { marginTop: "var(--gap)" } });
     page.appendChild(body);
@@ -6145,11 +6206,31 @@ window.SHOP = {
          A.params — so the chosen tab and month live there, or every save
          would dump the shopkeeper back on the first tab. */
       A.params = A.params || {};
-      A.params.tab = tab; A.params.month = month;
+      A.params.tab = tab; A.params.month = month; A.params.custom = custom;
       A.$$(".seg button", head).forEach(function (b, i) {
         b.className = TABS[i] && TABS[i][0] === tab ? "on" : "";
       });
-      label.textContent = monthName(month);
+
+      // wages and regular bills belong to a month, so those two books
+      // keep the stepper whatever the other tabs are doing
+      const byDate = !!custom && (tab === "shop" || tab === "personal");
+      picker.classList.toggle("hide", !byDate);
+      stepper.classList.toggle("hide", byDate);
+      modeBtn.textContent = byDate ? L("মাস ধরে", "By month")
+                                   : L("তারিখ ধরে", "Pick dates");
+      // className last would wipe the hide class, so set it first
+      modeBtn.className = "btn btn-sm" + (byDate ? " btn-pri" : "");
+      modeBtn.classList.toggle("hide", tab === "regular" || tab === "staff");
+      if (byDate) {
+        if (custom.from > custom.to) {
+          const t = custom.from; custom.from = custom.to; custom.to = t;
+        }
+        fromF.input.value = custom.from;
+        toF.input.value = custom.to;
+        label.textContent = A.dateText(custom.from) + " – " + A.dateText(custom.to);
+      } else {
+        label.textContent = monthName(month);
+      }
       A.clear(body);
       if (tab === "shop") drawSpend("shop");
       else if (tab === "personal") drawSpend("personal");
@@ -6159,8 +6240,10 @@ window.SHOP = {
 
     /* ---- one month of spending, this month against last ---- */
     function drawSpend(kind) {
-      const r = monthBounds(month);
-      const prev = monthBounds(shiftMonth(month, -1));
+      const byDate = !!custom;
+      const r = byDate ? { start: custom.from, end: custom.to } : monthBounds(month);
+      // the comparison is the same length of time, ending where this one starts
+      const prev = byDate ? previousSpan(r) : monthBounds(shiftMonth(month, -1));
       const total = e.expenseTotal(r.start, r.end, kind);
       const was = e.expenseTotal(prev.start, prev.end, kind);
       const rows = e.expensesBetween(r.start, r.end, kind);
@@ -6170,14 +6253,17 @@ window.SHOP = {
       body.appendChild(el("div", { class: "grid tiles3" }, [
         el("div", { class: "tile tile-hero" }, [
           el("div", { class: "k", text: kind === "personal"
-            ? L("এ মাসে নিজে নিয়েছেন", "Taken this month")
-            : L("এ মাসের খরচ", "Spent this month") }),
+            ? (byDate ? L("এই সময়ে নিজে নিয়েছেন", "Taken in this span")
+                      : L("এ মাসে নিজে নিয়েছেন", "Taken this month"))
+            : (byDate ? L("এই সময়ের খরচ", "Spent in this span")
+                      : L("এ মাসের খরচ", "Spent this month")) }),
           el("div", { class: "v", text: A.money(total) }),
           el("div", { class: "s", text: (bn() ? root.bnDigits(String(rows.length)) : rows.length)
             + L(" টি এন্ট্রি", " entries") }),
         ]),
         el("div", { class: "tile" }, [
-          el("div", { class: "k", text: L("গত মাসে", "Last month") }),
+          el("div", { class: "k", text: byDate ? L("আগের সমান সময়ে", "Same span before")
+                                               : L("গত মাসে", "Last month") }),
           el("div", { class: "v", text: A.money(was) }),
           el("div", { class: "s " + (diff > 0 ? "bad-t" : diff < 0 ? "ok-t" : ""),
             text: !was && !total ? ""
@@ -6200,7 +6286,7 @@ window.SHOP = {
             [[T("Date"), T("Category"), T("Method"), T("Note"), T("Amount")]]
             .concat(rows.map(function (x) {
               return [x.spent_on, catLabel(x.category), x.method, x.note, x.amount]; })),
-            "expenses-" + kind + "-" + month);
+            "expenses-" + kind + "-" + (byDate ? r.start + "_" + r.end : month));
         } }),
         el("button", { class: "btn btn-sm btn-pri",
           text: "＋ " + (kind === "personal" ? L("নিজের খরচ", "Personal")
@@ -6243,7 +6329,9 @@ window.SHOP = {
       if (!rows.length) {
         card.appendChild(el("div", { class: "empty" }, [
           el("div", { class: "big", text: "🧾" }),
-          el("div", { text: L("এ মাসে কিছু লেখা হয়নি", "Nothing recorded this month") }),
+          el("div", { text: byDate
+            ? L("এই সময়ে কিছু লেখা হয়নি", "Nothing recorded in this span")
+            : L("এ মাসে কিছু লেখা হয়নি", "Nothing recorded this month") }),
         ]));
       } else {
         const tbl = el("table", { class: "tbl tbl-cards" });
