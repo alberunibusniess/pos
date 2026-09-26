@@ -748,6 +748,80 @@ table.tbl td .btn + .btn{margin-inline-start:6px}
   table.tbl-cards td.c-hide-phone{display:none}
 }
 
+
+/* ------------------------------------------------------- checkbox row */
+.checkrow{
+  display:flex;align-items:center;gap:10px;min-height:var(--tap);
+  padding:0 2px;cursor:pointer;color:var(--muted);font-size:.9rem;font-weight:600;
+}
+.checkrow input{
+  width:22px;height:22px;flex:0 0 22px;accent-color:var(--pri);margin:0;cursor:pointer;
+}
+.checkrow:hover{color:var(--text)}
+
+
+/* ---------------------------------------------- A4 memo, on screen */
+.modal.wide{width:min(900px,100%)}
+.invpaper{
+  background:#fff;color:#101a17;border-radius:8px;padding:26px 28px;
+  box-shadow:inset 0 0 0 1px #e6ecea;
+  --ink:var(--pri-d);--stamp:var(--pri-d);
+}
+html[data-theme="dark"] .invpaper{--ink:#0b5f58}
+.invpaper .inv-top{display:flex;gap:16px;align-items:flex-start;justify-content:space-between}
+.invpaper .inv-brand{display:flex;gap:12px;align-items:flex-start;min-width:0}
+.invpaper .inv-mark{width:46px;height:46px;flex:0 0 46px;border-radius:12px;display:grid;
+  place-items:center;color:#fff;font-weight:800;font-size:1.35rem;background:var(--ink)}
+.invpaper .inv-shop{font-size:1.3rem;font-weight:800;line-height:1.2}
+.invpaper .inv-meta{font-size:.78rem;color:#5d6b67;line-height:1.45}
+.invpaper .inv-stamp{border:2px solid var(--stamp);border-radius:8px;padding:6px 16px;
+  text-align:center;flex:0 0 auto}
+.invpaper .inv-stamp.ok{--stamp:#12795f}
+.invpaper .inv-stamp.warn{--stamp:#b06a00}
+.invpaper .inv-stamp.bad{--stamp:#b3261e}
+.invpaper .inv-stamp-t{color:var(--stamp);font-weight:800;font-size:1.02rem}
+.invpaper .inv-stamp-s{color:var(--stamp);font-size:.7rem;margin-top:2px}
+.invpaper .inv-rule{height:3px;background:var(--ink);margin-top:12px;border-radius:2px}
+.invpaper .inv-title{text-align:center;color:var(--ink);font-size:1.1rem;
+  margin:16px 0 18px;font-weight:800}
+.invpaper .inv-parties{display:flex;gap:20px;justify-content:space-between;margin-bottom:18px}
+.invpaper .inv-lbl{font-size:.72rem;font-weight:800;color:var(--ink);
+  margin-bottom:4px}
+.invpaper .inv-cust,.invpaper .inv-no{font-size:1rem;font-weight:800}
+.invpaper .inv-tbl{width:100%;border-collapse:collapse}
+.invpaper .inv-tbl th{font-size:.72rem;font-weight:700;color:#5d6b67;text-align:left;
+  padding:8px 10px;border-bottom:1.5px solid #cfd9d6;background:transparent}
+.invpaper .inv-tbl th.right,.invpaper .inv-tbl td.right{text-align:right}
+.invpaper .inv-tbl td{padding:9px 10px;border-bottom:1px solid #e6ecea;vertical-align:top}
+.invpaper .inv-tbl .sl{width:34px;color:#5d6b67}
+.invpaper .inv-item{font-weight:700}
+.invpaper .strong{font-weight:800}
+.invpaper .inv-foot{display:flex;gap:24px;justify-content:space-between;margin-top:14px}
+.invpaper .inv-words{flex:1;min-width:0;padding-top:6px}
+.invpaper .inv-sum{flex:0 0 58%;max-width:300px}
+.invpaper .inv-sum-r{display:flex;justify-content:space-between;gap:16px;padding:5px 0;
+  font-size:.92rem}
+.invpaper .inv-sum-r .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.invpaper .inv-sum-r.total{border-top:1.5px solid #cfd9d6;margin-top:6px;padding-top:9px;
+  font-size:1.2rem;font-weight:800;color:var(--ink)}
+.invpaper .inv-sum-r.pay{color:#5d6b67;font-size:.85rem}
+.invpaper .inv-sum-r.due{border-top:1px solid #e6ecea;margin-top:4px;padding-top:8px;
+  font-weight:800;color:#b3261e}
+.invpaper .inv-sign{display:flex;gap:40px;justify-content:space-between;margin-top:46px}
+.invpaper .inv-sign-b{flex:0 0 42%}
+.invpaper .inv-line{border-top:1px solid #9aa7a3;margin-bottom:5px}
+.invpaper .inv-note{margin-top:28px;padding-top:10px;border-top:1px solid #e6ecea;
+  text-align:center;font-size:.85rem}
+@media (max-width:700px){
+  .invpaper{padding:16px 14px;font-size:.88rem}
+  .invpaper .inv-parties,.invpaper .inv-foot,.invpaper .inv-sign{
+    flex-direction:column;gap:12px}
+  .invpaper .inv-sum{flex:1 1 auto;max-width:none}
+  .invpaper .inv-sign-b{flex:1 1 auto}
+  .invpaper .right{text-align:left}
+  .invpaper .inv-tbl th,.invpaper .inv-tbl td{padding:7px 6px}
+}
+
 </style>
 </head>
 <body>
@@ -2272,6 +2346,7 @@ window.SHOP = {
     "Erase everything":"সব মুছে ফেলুন","Storage used":"জায়গা ব্যবহৃত",
     "Bengali numbers on receipts":"মেমোতে বাংলা সংখ্যা",
     "Paper width":"কাগজের মাপ","Receipt design":"মেমোর ডিজাইন",
+    "Memo style":"মেমো যেভাবে","A4 memo":"A4 মেমো",
     "Footer message":"নিচের বার্তা",
   };
   let lang = "bn";
@@ -2606,7 +2681,16 @@ window.SHOP = {
       // a number input throws on selectionStart in some browsers
       try { start = live.selectionStart; end = live.selectionEnd; } catch (err) {}
     }
+    // Rebuilding empties the page for an instant; without this the
+    // browser loses its place and the screen snaps back to the top
+    // after every single character.
+    const y = root.scrollY || document.documentElement.scrollTop || 0;
     redraw();
+    if (y) {
+      root.scrollTo(0, y);
+      // the new content may still be laying out
+      requestAnimationFrame(function () { root.scrollTo(0, y); });
+    }
     if (!key) return;
     const next = document.querySelector('[data-k="' + key + '"]');
     if (!next || next === document.activeElement) return;
@@ -2660,6 +2744,7 @@ window.SHOP = {
     eye:       "M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Zm9.5 2.8a2.8 2.8 0 1 0 0-5.6 2.8 2.8 0 0 0 0 5.6Z",
     camera:    "M3.5 8.5h3l1.6-2.4h7.8l1.6 2.4h3v10.4h-17V8.5Zm8.5 8.2a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z",
     alert:     "M12 3.5 21 19.5H3L12 3.5Zm0 5.4v5m0 2.6h.01",
+    page:      "M6 2.6h7.6L19 8v13.4H6V2.6Zm7.4 0V8.2H19M9 12.5h6M9 16h6",
     shop:      "M4 9.5h16V20H4V9.5Zm-.5-1.2L5.2 4h13.6l1.7 4.3a3 3 0 0 1-5.3 2.2 3 3 0 0 1-5.3 0 3 3 0 0 1-5.3-2.2ZM9.5 20v-5.5h5V20",
   };
 
@@ -2676,7 +2761,7 @@ window.SHOP = {
     "\u2713": "check", "\u2714": "check",
     "\u21E9": "download", "\u2B07": "download", "\u21E7": "upload", "\u2B06": "upload",
     "\uD83D\uDDD1": "trash", "\u270E": "edit", "\uD83D\uDD0D": "search",
-    "\uD83D\uDDA8": "print", "\uD83D\uDFE2": "whatsapp",
+    "\uD83D\uDDA8": "print", "\uD83D\uDFE2": "whatsapp", "\uD83D\uDCC4": "page",
     "\uD83D\uDCE6": "products", "\uD83D\uDED2": "till",
     "\uD83D\uDC65": "customers", "\uD83D\uDC64": "user",
     "\uD83D\uDE9A": "suppliers", "\uD83D\uDCC8": "reports",
@@ -2935,11 +3020,16 @@ window.SHOP = {
         if (root.console) console.error(err);
       }
     }
-    page.scrollIntoView ? window.scrollTo(0, 0) : null;
+    if (!App._keeping) window.scrollTo(0, 0);
   };
 
   App.register = function (name, fn) { App._views[name] = fn; };
-  App.refresh = function () { App.go(App.view, App.params); };
+  /** Redraw the current screen in place: same scroll, same caret. */
+  App.refresh = function () {
+    App._keeping = true;
+    try { App.keepFocus(function () { App.go(App.view, App.params); }); }
+    finally { App._keeping = false; }
+  };
 
   App.weekday = function (day) {
     const d = asDate(day);
@@ -4112,12 +4202,31 @@ window.SHOP = {
     const name = A.field(T("Name") + " *", { value: c.name || "" });
     const phone = A.field(T("Phone"), { value: c.phone || "", inputmode: "tel",
       placeholder: "01XXXXXXXXX" });
+    /* Almost every shop customer uses WhatsApp on the number they
+       already gave, so asking for it twice was pure friction.  The
+       second box only appears for the rare customer whose WhatsApp
+       sits on a different number. */
     const wa = A.field("WhatsApp", { value: c.whatsapp || "", inputmode: "tel",
-      hint: root.isBn() ? "ফাঁকা রাখলে ফোন নম্বরই ব্যবহার হবে" : "blank = use the phone number" });
+      placeholder: "01XXXXXXXXX" });
+    const differs = !!(c.whatsapp && c.phone && c.whatsapp !== c.phone);
+    const waBox = el("div", { class: "hide", style: { marginTop: "10px" } }, [wa]);
+    const waToggle = el("label", { class: "checkrow" }, [
+      el("input", { type: "checkbox", checked: differs ? "checked" : null }),
+      el("span", { text: root.isBn() ? "WhatsApp নম্বর আলাদা"
+                                     : "WhatsApp is a different number" }),
+    ]);
+    waToggle.querySelector("input").addEventListener("change", function () {
+      waBox.classList.toggle("hide", !this.checked);
+      if (this.checked && !wa.input.value) wa.input.value = phone.input.value;
+      if (!this.checked) wa.input.value = "";
+    });
+    if (differs) waBox.classList.remove("hide");
+
     const addr = A.field(T("Address"), { type: "textarea", value: c.address || "" });
     m.body.appendChild(name);
-    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
-      [el("div", { class: "grow" }, [phone]), el("div", { class: "grow" }, [wa])]));
+    m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [phone]));
+    m.body.appendChild(el("div", { style: { marginTop: "8px" } }, [waToggle]));
+    m.body.appendChild(waBox);
     m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [addr]));
     m.footer.appendChild(el("button", { class: "btn", text: T("Cancel"), onclick: m.close }));
     m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Save"),
@@ -5011,6 +5120,9 @@ window.SHOP = {
       text: A.receiptText(s, items) }));
     m.footer.appendChild(el("button", { class: "btn", text: "🖨 " + T("Print"),
       onclick: function () { A.printReceipt(s, items); } }));
+    m.footer.appendChild(el("button", { class: "btn",
+      text: "📄 " + (root.isBn() ? "A4 মেমো" : "A4 memo"),
+      onclick: function () { A.showInvoice && A.showInvoice(s, items); } }));
     if (s.customer_phone) {
       m.footer.appendChild(el("button", { class: "btn btn-ok",
         text: "🟢 WhatsApp", onclick: function () { A.shareReceipt(s, items); } }));
@@ -5789,6 +5901,11 @@ window.SHOP = {
       segRow("Bengali numbers on receipts", [{ value: "0", label: T("No") },
         { value: "1", label: T("Yes") }], String(e.setting("receipt_bn_digits", "0")),
         function (v) { e.setSetting("receipt_bn_digits", v); A.refresh(); }),
+      segRow("Memo style", [{ value: "slip", label: root.isBn() ? "ছোট স্লিপ" : "Slip" },
+        { value: "a4", label: root.isBn() ? "A4 পাতা" : "A4 page" }],
+        e.setting("memo_style", "slip"), function (v) {
+          e.setSetting("memo_style", v); A.refresh();
+        }),
       segRow("Print", [{ value: "0", label: root.isBn() ? "হাতে" : "Manual" },
         { value: "1", label: root.isBn() ? "নিজে থেকে" : "Automatic" }],
         String(e.setting("auto_print", "0")), function (v) {
@@ -6132,13 +6249,314 @@ window.SHOP = {
     m.body.appendChild(el("div", { class: "slip", text: A.receiptText(sale, items) }));
     m.footer.appendChild(el("button", { class: "btn", text: "🖨 " + T("Print receipt"),
       onclick: function () { A.printReceipt(sale, items); } }));
+    m.footer.appendChild(el("button", { class: "btn",
+      text: "📄 " + (root.isBn() ? "A4 মেমো" : "A4 memo"),
+      onclick: function () { A.showInvoice && A.showInvoice(sale, items); } }));
     m.footer.appendChild(el("button", { class: "btn btn-ok", text: "🟢 " + T("Send on WhatsApp"),
       onclick: function () { A.shareReceipt(sale, items); } }));
     m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Next sale") + " ▸",
       onclick: function () { m.close(); } }));
     if (A.eng.setting("auto_print", "0") === "1") {
-      setTimeout(function () { A.printReceipt(sale, items); }, 200);
+      setTimeout(function () {
+        if (A.eng.setting("memo_style", "slip") === "a4" && A.printInvoice) {
+          A.printInvoice(sale, items);
+        } else A.printReceipt(sale, items);
+      }, 200);
     }
+  };
+})(window);
+</script>
+<script>
+/* =================================================================
+   A4 মেমো — the paper memo a shop hands over or files away.
+
+   The thermal slip is for the counter: narrow, fast, disposable.  This
+   is the other memo a Bangladeshi shop needs — the one on a full sheet
+   with the shop's name at the top, a proper item table and a signature
+   line, for a wholesale customer, a company account or the shop's own
+   file copy.  It prints from any ordinary printer.
+
+   Both are built from the same sale, so a bill can be printed either
+   way, or both, without being re-entered.
+   ================================================================= */
+(function (root) {
+  "use strict";
+  const A = root.App, el = A.el, T = root.T;
+
+  const bn = function () { return root.isBn(); };
+  const L = function (b, e) { return bn() ? b : e; };
+
+  /** Money for paper: grouped, no decimals when they are all zeros —
+   *  a shop memo says 3,000 Tk, not 3,000.00. */
+  function money(v, opts) {
+    const n = Math.round((Number(v) || 0) * 100) / 100;
+    const whole = Math.abs(n % 1) < 0.005;
+    const txt = n.toLocaleString("en-US", {
+      minimumFractionDigits: whole ? 0 : 2,
+      maximumFractionDigits: 2,
+    });
+    if (!(opts && opts.sym)) return bn() ? root.bnDigits(txt) : txt;
+    // "৫,০৫০ Tk" reads like two languages arguing; on a Bengali memo the
+    // word is টাকা.
+    return bn() ? root.bnDigits(txt) + " টাকা" : txt + " " + A.symAscii();
+  }
+
+  function dateLine(s) {
+    return A.dateText(s) + (A.timeText(s) ? ", " + A.timeText(s) : "");
+  }
+
+  /* --------------------------------------------------------- build */
+  A.invoiceNode = function (sale, items) {
+    const e = A.eng;
+    const shop = A.shopName();
+    const phone = e.setting("business_phone", root.SHOP.phone);
+    const addr = e.setting("business_address", root.SHOP.address);
+    const due = Number(sale.due) || 0;
+    const paid = Number(sale.paid_cash) + Number(sale.paid_mobile);
+    const status = due > 0.005
+      ? (paid > 0.005 ? L("আংশিক", "PARTIAL") : L("বাকি", "DUE"))
+      : L("পরিশোধিত", "PAID");
+    const statusTone = due > 0.005 ? (paid > 0.005 ? "warn" : "bad") : "ok";
+    const isReturn = sale.kind === "return";
+
+    const sheet = el("div", { class: "inv" });
+
+    /* ---- masthead ---- */
+    sheet.appendChild(el("div", { class: "inv-top" }, [
+      el("div", { class: "inv-brand" }, [
+        el("div", { class: "inv-mark", text: (shop || "?").trim().charAt(0) }),
+        el("div", {}, [
+          el("div", { class: "inv-shop", text: shop }),
+          addr ? el("div", { class: "inv-meta", text: addr }) : null,
+          phone ? el("div", { class: "inv-meta",
+            text: L("মোবাইল: ", "Phone: ") + phone }) : null,
+        ]),
+      ]),
+      el("div", { class: "inv-stamp " + statusTone }, [
+        el("div", { class: "inv-stamp-t", text: status }),
+        paid > 0.005 ? el("div", { class: "inv-stamp-s",
+          text: L("মাধ্যম: ", "via ") + (sale.payment_method || "Cash") }) : null,
+      ]),
+    ]));
+    sheet.appendChild(el("div", { class: "inv-rule" }));
+
+    sheet.appendChild(el("h2", { class: "inv-title",
+      text: isReturn ? L("ফেরত মেমো", "RETURN MEMO") : L("ক্যাশ মেমো", "CASH MEMO") }));
+
+    /* ---- who and which ---- */
+    const walkIn = !sale.customer_name || sale.customer_name === T("Walk-in")
+                || sale.customer_name === "Walk-in";
+    sheet.appendChild(el("div", { class: "inv-parties" }, [
+      el("div", {}, [
+        el("div", { class: "inv-lbl", text: L("যাকে দেওয়া হলো", "BILL TO") }),
+        el("div", { class: "inv-cust",
+          text: walkIn ? L("সাধারণ কাস্টমার", "Walk-in customer") : sale.customer_name }),
+        sale.customer_phone
+          ? el("div", { class: "inv-meta", text: sale.customer_phone }) : null,
+        (function () {
+          const c = sale.customer_id ? e.customer(sale.customer_id) : null;
+          return c && c.address ? el("div", { class: "inv-meta", text: c.address }) : null;
+        })(),
+      ]),
+      el("div", { class: "right" }, [
+        el("div", { class: "inv-lbl", text: L("মেমোর বিবরণ", "MEMO DETAILS") }),
+        el("div", { class: "inv-no", text: sale.invoice_no }),
+        el("div", { class: "inv-meta", text: dateLine(sale.created_at) }),
+        el("div", { class: "inv-meta",
+          text: L("অবস্থা: ", "Status: ") + status }),
+      ]),
+    ]));
+
+    /* ---- the goods ---- */
+    const tb = el("tbody");
+    (items || []).forEach(function (it, i) {
+      tb.appendChild(el("tr", {}, [
+        el("td", { class: "sl", text: bn() ? root.bnDigits(String(i + 1)) : String(i + 1) }),
+        el("td", {}, [
+          el("div", { class: "inv-item", text: it.name }),
+          it.unit ? el("div", { class: "inv-meta", text: it.unit }) : null,
+        ]),
+        el("td", { class: "right", text: A.qty(it.qty) }),
+        el("td", { class: "right", text: money(it.price) }),
+        el("td", { class: "right strong", text: money(it.line_total) }),
+      ]));
+    });
+    sheet.appendChild(el("table", { class: "inv-tbl" }, [
+      el("thead", {}, [el("tr", {}, [
+        el("th", { class: "sl", text: L("ক্রম", "SL") }),
+        el("th", { text: L("পণ্যের বিবরণ", "Item description") }),
+        el("th", { class: "right", text: L("পরিমাণ", "Qty") }),
+        el("th", { class: "right", text: L("দর", "Rate") }),
+        el("th", { class: "right", text: L("টাকা", "Amount") }),
+      ])]),
+      tb,
+    ]));
+
+    /* ---- the arithmetic ---- */
+    const rows = [];
+    const add = function (label, value, cls) {
+      rows.push(el("div", { class: "inv-sum-r " + (cls || "") }, [
+        el("span", { text: label }),
+        el("span", { class: "num", text: value }),
+      ]));
+    };
+    add(L("উপমোট", "Subtotal"), money(sale.subtotal));
+    if (Number(sale.discount_amt)) add(L("ছাড়", "Discount"), "− " + money(sale.discount_amt));
+    if (Number(sale.tax_amt)) {
+      add(L("ট্যাক্স", "VAT") + " (" + (bn() ? root.bnDigits(String(sale.tax_percent))
+        : sale.tax_percent) + "%)", money(sale.tax_amt));
+    }
+    if (Number(sale.delivery_charge)) {
+      add(L("ডেলিভারি", "Delivery"), money(sale.delivery_charge));
+    }
+    rows.push(el("div", { class: "inv-sum-r total" }, [
+      el("span", { text: L("সর্বমোট", "Total") }),
+      el("span", { class: "num", text: money(sale.grand_total, { sym: true }) }),
+    ]));
+    if (Number(sale.paid_cash)) add(L("ক্যাশ", "Cash"), money(sale.paid_cash), "pay");
+    if (Number(sale.paid_mobile)) {
+      add(sale.mobile_method || L("মোবাইল", "Mobile"), money(sale.paid_mobile), "pay");
+    }
+    if (Number(sale.change_due)) add(L("ফেরত", "Change"), money(sale.change_due), "pay");
+    if (due > 0.005) {
+      rows.push(el("div", { class: "inv-sum-r due" }, [
+        el("span", { text: L("বাকি রইল", "Balance due") }),
+        el("span", { class: "num", text: money(due, { sym: true }) }),
+      ]));
+    }
+
+    sheet.appendChild(el("div", { class: "inv-foot" }, [
+      el("div", { class: "inv-words" }, [
+        sale.trx_id ? el("div", { class: "inv-meta",
+          text: "TrxID: " + sale.trx_id }) : null,
+        sale.note ? el("div", { class: "inv-meta", text: sale.note }) : null,
+      ]),
+      el("div", { class: "inv-sum" }, rows),
+    ]));
+
+    sheet.appendChild(el("div", { class: "inv-sign" }, [
+      el("div", { class: "inv-sign-b" }, [
+        el("div", { class: "inv-line" }),
+        el("div", { class: "inv-meta", text: L("কাস্টমারের স্বাক্ষর", "Customer signature") }),
+      ]),
+      el("div", { class: "inv-sign-b right" }, [
+        el("div", { class: "inv-line" }),
+        el("div", { class: "inv-meta", text: L("দোকানের পক্ষে", "For " + shop) }),
+      ]),
+    ]));
+
+    const foot = e.setting("receipt_footer", L("ধন্যবাদ, আবার আসবেন",
+      "Thank you, please come again"));
+    sheet.appendChild(el("div", { class: "inv-note" }, [
+      el("div", { text: foot }),
+      el("div", { class: "inv-meta", text: L(
+        "সব টাকার অঙ্ক বাংলাদেশি টাকায়। এটি কম্পিউটারে তৈরি মেমো।",
+        "All amounts in Bangladeshi Taka. This is a computer-generated memo.") }),
+    ]));
+
+    return sheet;
+  };
+
+  /* --------------------------------------------------------- print */
+  const SHEET_CSS = [
+    '@page{size:A4;margin:12mm}',
+    '*{box-sizing:border-box}',
+    'body{margin:0;color:#101a17;background:#fff;',
+    'font-family:"POS Bangla","Hind Siliguri","Noto Sans Bengali",system-ui,',
+    '-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:10.5pt;line-height:1.5}',
+    '.inv{width:100%}',
+    '.inv-top{display:flex;gap:16px;align-items:flex-start;justify-content:space-between}',
+    '.inv-brand{display:flex;gap:12px;align-items:flex-start;min-width:0}',
+    '.inv-mark{width:46px;height:46px;flex:0 0 46px;border-radius:12px;display:flex;',
+    'align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20pt;',
+    'background:var(--ink)}',
+    '.inv-shop{font-size:17pt;font-weight:800;line-height:1.2;letter-spacing:-.01em}',
+    '.inv-meta{font-size:8.6pt;color:#5d6b67;line-height:1.45}',
+    '.inv-stamp{border:2px solid var(--stamp);border-radius:8px;padding:6px 16px;',
+    'text-align:center;flex:0 0 auto}',
+    '.inv-stamp-t{color:var(--stamp);font-weight:800;font-size:13pt}',
+    '.inv-stamp-s{color:var(--stamp);font-size:8pt;margin-top:2px}',
+    '.inv-rule{height:3px;background:var(--ink);margin:12px 0 0;border-radius:2px}',
+    '.inv-title{text-align:center;color:var(--ink);font-size:14pt;',
+    'margin:16px 0 18px;font-weight:800}',
+    '.inv-parties{display:flex;gap:20px;justify-content:space-between;margin-bottom:18px}',
+    '.inv-lbl{font-size:8.4pt;font-weight:800;color:var(--ink);',
+    'margin-bottom:4px}',
+    '.inv-cust{font-size:12pt;font-weight:800}',
+    '.inv-no{font-size:12pt;font-weight:800}',
+    '.right{text-align:right}',
+    '.inv-tbl{width:100%;border-collapse:collapse}',
+    '.inv-tbl th{font-size:8.4pt;font-weight:700;color:#5d6b67;text-align:left;',
+    'padding:8px 10px;border-bottom:1.5px solid #cfd9d6}',
+    '.inv-tbl th.right,.inv-tbl td.right{text-align:right}',
+    '.inv-tbl td{padding:9px 10px;border-bottom:1px solid #e6ecea;vertical-align:top}',
+    '.inv-tbl .sl{width:34px;color:#5d6b67}',
+    '.inv-item{font-weight:700}',
+    '.strong{font-weight:800}',
+    '.inv-foot{display:flex;gap:24px;justify-content:space-between;margin-top:14px}',
+    '.inv-words{flex:1;min-width:0;padding-top:6px}',
+    '.inv-sum{flex:0 0 58%;max-width:300px}',
+    '.inv-sum-r{display:flex;justify-content:space-between;gap:16px;padding:5px 0;',
+    'font-size:10pt}',
+    '.inv-sum-r .num{font-variant-numeric:tabular-nums;white-space:nowrap}',
+    '.inv-sum-r.total{border-top:1.5px solid #cfd9d6;margin-top:6px;padding-top:9px;',
+    'font-size:13pt;font-weight:800;color:var(--ink)}',
+    '.inv-sum-r.pay{color:#5d6b67;font-size:9.4pt}',
+    '.inv-sum-r.due{border-top:1px solid #e6ecea;margin-top:4px;padding-top:8px;',
+    'font-weight:800;color:#b3261e}',
+    '.inv-sign{display:flex;gap:40px;justify-content:space-between;margin-top:46px}',
+    '.inv-sign-b{flex:0 0 42%}',
+    '.inv-line{border-top:1px solid #9aa7a3;margin-bottom:5px}',
+    '.inv-note{margin-top:28px;padding-top:10px;border-top:1px solid #e6ecea;',
+    'text-align:center}',
+  ].join("");
+
+  function tones() {
+    const css = getComputedStyle(document.documentElement);
+    const ink = (css.getPropertyValue("--pri-d") || "#0b5f58").trim() || "#0b5f58";
+    return { ink: ink };
+  }
+
+  A.printInvoice = function (sale, items) {
+    const due = Number(sale.due) || 0;
+    const paid = Number(sale.paid_cash) + Number(sale.paid_mobile);
+    const stamp = due > 0.005 ? (paid > 0.005 ? "#b06a00" : "#b3261e") : "#12795f";
+    const t = tones();
+    const frame = document.createElement("iframe");
+    frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+    document.body.appendChild(frame);
+    const doc = frame.contentWindow.document;
+    doc.open();
+    doc.write('<!doctype html><html lang="' + (bn() ? "bn" : "en") + '"><head>'
+      + '<meta charset="utf-8"><title>' + (sale.invoice_no || "memo") + '</title>'
+      + "<style>:root{--ink:" + t.ink + ";--stamp:" + stamp + "}" + SHEET_CSS
+      + "</style></head><body></body></html>");
+    doc.close();
+    // the embedded font lives in this document, so carry it across
+    A.$$('style', document.head).forEach(function (s) {
+      if (s.textContent.indexOf("@font-face") < 0) return;
+      const copy = doc.createElement("style");
+      copy.textContent = s.textContent;
+      doc.head.appendChild(copy);
+    });
+    doc.body.appendChild(A.invoiceNode(sale, items));
+    setTimeout(function () {
+      try { frame.contentWindow.focus(); frame.contentWindow.print(); }
+      catch (err) { A.toast(L("প্রিন্ট করা গেল না", "Could not print"), "bad"); }
+      setTimeout(function () { frame.remove(); }, 1500);
+    }, 260);
+  };
+
+  /** Show it on screen first — on a phone there is usually no printer,
+   *  and the shopkeeper wants to check it before sending. */
+  A.showInvoice = function (sale, items) {
+    const m = A.modal({ title: L("A4 মেমো", "A4 memo"), noFocus: true });
+    m.veil.querySelector(".modal").classList.add("wide");
+    const paper = el("div", { class: "invpaper" }, [A.invoiceNode(sale, items)]);
+    m.body.appendChild(paper);
+    m.footer.appendChild(el("button", { class: "btn", text: T("Close"), onclick: m.close }));
+    m.footer.appendChild(el("button", { class: "btn btn-pri", text: "🖨 " + T("Print"),
+      onclick: function () { A.printInvoice(sale, items); } }));
   };
 })(window);
 </script>
