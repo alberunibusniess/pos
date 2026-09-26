@@ -2218,8 +2218,10 @@ window.SHOP = {
     "Scan or type a product name":"বারকোড স্ক্যান বা পণ্যের নাম লিখুন",
     "Cart is empty":"কার্ট খালি","Tap a product to start":"পণ্যে চাপ দিয়ে শুরু করুন",
     "Subtotal":"উপমোট","Discount":"ছাড়","Tax":"ট্যাক্স","Delivery":"ডেলিভারি",
-    "Grand total":"সর্বমোট","Cash received":"ক্যাশ নেওয়া হলো",
-    "Mobile / bKash":"মোবাইল / বিকাশ","TrxID":"TrxID","Change":"ফেরত",
+    "Grand total":"সর্বমোট","Cash received":"ক্যাশে কত টাকা",
+    "Mobile / bKash":"বিকাশ/নগদে কত টাকা","TrxID":"TrxID","Change":"ফেরত",
+    "amount":"টাকার অঙ্ক",
+    "That looks like a phone number — type the amount here":"এটা কি ফোন নম্বর? এখানে টাকার অঙ্ক লিখুন",
     "Complete sale":"বিক্রয় সম্পন্ন","Hold":"হোল্ড","Held bills":"হোল্ড করা বিল",
     "Walk-in":"সাধারণ কাস্টমার","Attach customer":"কাস্টমার যোগ করুন",
     "Quick item":"দ্রুত আইটেম","Clear":"খালি করুন",
@@ -3311,6 +3313,14 @@ window.SHOP = {
 
   function lineTotal(l) { return r2(Math.max(l.qty, 0) * Math.max(l.price, 0)); }
 
+
+  /** 01XXXXXXXXX typed into a money box.  Eleven digits starting 01 is a
+   *  Bangladeshi mobile number and never a plausible bill. */
+  function looksLikePhone(v) {
+    const d = String(v || "").replace(/\D/g, "");
+    return d.length === 11 && d.slice(0, 2) === "01";
+  }
+
   function compute() {
     let subtotal = 0;
     cart.lines.forEach(function (l) { subtotal += lineTotal(l); });
@@ -3497,15 +3507,30 @@ window.SHOP = {
     ]));
 
     // ---- payment
+    /* These two boxes take an AMOUNT.  Labelled "Mobile / bKash" a
+       shopkeeper reads them as "the customer's mobile number" and types
+       one in — a real bill went out with 1,924,277,708 taka against it.
+       The label now says money, and a phone-shaped number is called out
+       under the box before the sale can be completed. */
     const cashInp = A.field(T("Cash received"), { type: "number", inputmode: "decimal",
-      value: cart.cash, min: 0, key: "cash" });
-    cashInp.input.addEventListener("input", function () { cart.cash = cashInp.input.value; paint(); });
+      value: cart.cash, min: 0, key: "cash", placeholder: T("amount") });
+    cashInp.input.addEventListener("input", function () {
+      cart.cash = cashInp.input.value; paint(); });
     const mobInp = A.field(T("Mobile / bKash"), { type: "number", inputmode: "decimal",
-      value: cart.mobile, min: 0, key: "mobile" });
-    mobInp.input.addEventListener("input", function () { cart.mobile = mobInp.input.value; paint(); });
+      value: cart.mobile, min: 0, key: "mobile", placeholder: T("amount") });
+    mobInp.input.addEventListener("input", function () {
+      cart.mobile = mobInp.input.value; paint(); });
     const pay = el("div", { class: "row", style: { marginTop: "12px", gap: "8px" } },
       [el("div", { class: "grow" }, [cashInp]), el("div", { class: "grow" }, [mobInp])]);
     cartBox.appendChild(pay);
+
+    [[cashInp, cart.cash], [mobInp, cart.mobile]].forEach(function (pair) {
+      if (!looksLikePhone(pair[1])) return;
+      pair[0].appendChild(el("div", { class: "tiny", style: { color: "var(--bad)",
+        fontWeight: "700", marginTop: "4px" },
+        text: T("That looks like a phone number — type the amount here") }));
+      pair[0].input.style.borderColor = "var(--bad)";
+    });
 
     if (t.paid_mobile > 0) {
       const w = A.field("", { type: "select", value: cart.wallet,
@@ -3641,6 +3666,25 @@ window.SHOP = {
   function complete() {
     if (!cart.lines.length) return A.toast(T("Cart is empty"), "warn");
     const t = compute();
+
+    /* Last gate before a wrong figure is written into the books. */
+    const phoney = [cart.cash, cart.mobile].some(looksLikePhone);
+    const absurd = t.grand_total > 0 && t.paid > t.grand_total * 20 && t.paid > 10000;
+    if (phoney || absurd) {
+      A.confirm(root.isBn() ? "টাকার অঙ্কটা মিলছে না" : "That amount looks wrong",
+        (root.isBn()
+          ? "বিলের সর্বমোট " + A.money(t.grand_total) + ", কিন্তু নেওয়া হয়েছে "
+            + A.money(t.paid) + "।\n\nফোন নম্বর লিখে ফেলেননি তো? "
+            + "ওই ঘরে টাকার অঙ্ক লিখতে হয়।\n\nতবুও সেভ করব?"
+          : "The bill is " + A.money(t.grand_total) + " but " + A.money(t.paid)
+            + " was entered.\n\nDid a phone number go into the amount box?"
+            + "\n\nSave anyway?"),
+        { danger: true }).then(function (y) { if (y) proceed(); });
+      return;
+    }
+    proceed();
+
+    function proceed() {
     const finish = function () {
       if (t.paid_mobile > 0 && !t.trx_id) {
         A.confirm(T("TrxID"), root.isBn()
@@ -3657,6 +3701,7 @@ window.SHOP = {
       return;
     }
     finish();
+    }
   }
 
   function save(t) {
@@ -5925,20 +5970,38 @@ window.SHOP = {
       const qty = (Math.round(it.qty * 1000) / 1000) + " " + (it.unit || "");
       L.push(two("  " + qty + " x " + n(it.price), n(it.line_total), w));
     });
-    L.push(rule("-", w));
-    L.push(two("Subtotal", n(sale.subtotal), w));
-    if (Number(sale.discount_amt)) L.push(two("Discount", "-" + n(sale.discount_amt), w));
-    if (Number(sale.tax_amt)) L.push(two("Tax (" + sale.tax_percent + "%)", n(sale.tax_amt), w));
-    if (Number(sale.delivery_charge)) L.push(two("Delivery", n(sale.delivery_charge), w));
-    L.push(rule("=", w));
-    L.push(two("TOTAL", sym + n(sale.grand_total), w));
-    if (Number(sale.paid_cash)) L.push(two("Cash", n(sale.paid_cash), w));
-    if (Number(sale.paid_mobile)) {
-      L.push(two(sale.mobile_method || "Mobile", n(sale.paid_mobile), w));
-      if (sale.trx_id) L.push(two("TrxID", sale.trx_id, w));
+    /* The total is what the customer looks for, so nothing shares a line
+       with it: rules above and below, and the workings only printed when
+       there actually are any.  Subtotal on its own, equal to the total,
+       is noise on a memo. */
+    const adjusted = Number(sale.discount_amt) || Number(sale.tax_amt)
+                   || Number(sale.delivery_charge);
+    if (adjusted) {
+      L.push(rule("-", w));
+      L.push(two("Subtotal", n(sale.subtotal), w));
+      if (Number(sale.discount_amt)) L.push(two("Discount", "-" + n(sale.discount_amt), w));
+      if (Number(sale.tax_amt)) L.push(two("Tax (" + sale.tax_percent + "%)", n(sale.tax_amt), w));
+      if (Number(sale.delivery_charge)) L.push(two("Delivery", n(sale.delivery_charge), w));
     }
-    if (Number(sale.change_due)) L.push(two("Change", n(sale.change_due), w));
-    if (Number(sale.due)) L.push(two("DUE", n(sale.due), w));
+    L.push(rule("=", w));
+    L.push(two("TOTAL", sym + " " + n(sale.grand_total), w));
+    L.push(rule("=", w));
+
+    const paidLines = [];
+    if (Number(sale.paid_cash)) paidLines.push(two("  Cash", n(sale.paid_cash), w));
+    if (Number(sale.paid_mobile)) {
+      paidLines.push(two("  " + (sale.mobile_method || "Mobile"), n(sale.paid_mobile), w));
+      if (sale.trx_id) paidLines.push(two("  TrxID", sale.trx_id, w));
+    }
+    if (paidLines.length) {
+      L.push("Paid by");
+      paidLines.forEach(function (x) { L.push(x); });
+    }
+    if (Number(sale.change_due)) L.push(two("Change returned", n(sale.change_due), w));
+    if (Number(sale.due)) {
+      L.push(rule("-", w));
+      L.push(two("DUE", sym + " " + n(sale.due), w));
+    }
     L.push(rule("-", w));
     const foot = A.eng.setting("receipt_footer", root.isBn()
       ? "ধন্যবাদ, আবার আসবেন" : "Thank you, please come again");
