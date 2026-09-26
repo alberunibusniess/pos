@@ -1,7 +1,7 @@
 /* The service worker is what makes the app work with the phone in flight
    mode: it keeps a copy of the page itself, so after the first visit
    nothing is ever fetched again unless a new version is published. */
-const CACHE = "pos-v8";
+const CACHE = "pos-v9";
 const FILES = ["./", "./index.html", "./manifest.webmanifest",
                "./icon-192.png", "./icon-512.png"];
 
