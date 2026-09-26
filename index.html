@@ -289,7 +289,9 @@ table.tbl tbody tr:hover{background:var(--surface2)}
   .modal > footer .btn{min-width:0}
 }
 @media (min-width:901px){ .only-phone{display:none !important} }
-@media (min-width:641px){ table.tbl td.c-name .tiny{display:none} }
+/* the customers table repeats the phone under the name for the
+   card layout; on a wide screen its own column shows it */
+@media (min-width:641px){ table.tbl.cust-tbl td.c-name .tiny{display:none} }
 
 @media print{
   body{background:#fff}
@@ -822,6 +824,15 @@ html[data-theme="dark"] .invpaper{--ink:#0b5f58}
   .invpaper .inv-tbl th,.invpaper .inv-tbl td{padding:7px 6px}
 }
 
+
+/* ---------------------------------------------------------- expenses */
+.note-soft{
+  border-color:color-mix(in srgb,var(--warn) 34%,var(--hair));
+  background:linear-gradient(180deg,color-mix(in srgb,var(--warn) 9%,var(--surface)),
+    var(--surface));
+}
+tr.tap{cursor:pointer}
+
 </style>
 </head>
 <body>
@@ -1328,34 +1339,10 @@ window.SHOP = {
   };
 
   // ------------------------------------------------------------------ expenses
+  /** Kept for the older call sites: a plain shop expense. */
   Engine.prototype.addExpense = function (category, amount, note, spent_on, user_id, method) {
-    const row = {
-      id: this.db.nextId("expenses"), category: category || "General",
-      amount: r2(amount), method: method || "Cash", note: note || "",
-      spent_on: spent_on || dayKey(), user_id: user_id || null,
-      created_at: stamp(),
-    };
-    this._t("expenses").push(row);
-    this.db.put("expenses", row);
-    return row;
-  };
-
-  Engine.prototype.expensesBetween = function (start, end) {
-    return this._t("expenses").filter((e) => inRange(dayOf(e), start, end))
-      .sort((a, b) => b.id - a.id);
-  };
-
-  Engine.prototype.expenseTotal = function (start, end) {
-    return r2(this.expensesBetween(start, end).reduce((s, e) => s + num(e.amount), 0));
-  };
-
-  Engine.prototype.expenseByCategory = function (start, end) {
-    const by = {};
-    this.expensesBetween(start, end).forEach((e) => {
-      by[e.category] = r2((by[e.category] || 0) + num(e.amount));
-    });
-    return Object.keys(by).map((k) => ({ category: k, total: by[k] }))
-      .sort((a, b) => b.total - a.total);
+    return this.saveExpense({ category: category, amount: amount, note: note,
+      spent_on: spent_on, user_id: user_id, method: method, kind: "shop" });
   };
 
   // -------------------------------------------------------------------- profit
@@ -1376,11 +1363,16 @@ window.SHOP = {
       });
     });
     revenue = r2(revenue); tax = r2(tax); cogs = r2(cogs);
-    const expenses = this.expenseTotal(start, end);
+    // Only the cost of running the shop comes off the profit.  What the
+    // owner took home is the profit being spent, not a cost of earning it.
+    const expenses = this.expenseTotal(start, end, "shop");
+    const personal = this.expenseTotal(start, end, "personal");
     const gross = r2(revenue - tax - cogs);
+    const net = r2(gross - expenses);
     return {
       revenue: revenue, tax: tax, cogs: cogs, gross: gross,
-      discount: r2(discount), expenses: expenses, net: r2(gross - expenses),
+      discount: r2(discount), expenses: expenses, net: net,
+      personal: personal, left_after_personal: r2(net - personal),
       lines_without_cost: untracked,
     };
   };
@@ -1402,8 +1394,11 @@ window.SHOP = {
       }
     });
     // An expense paid from the bKash app never touched the drawer.
+    // Dated by when the money left, not when it was typed in — and the
+    // owner's own draw empties the drawer exactly like a shop cost does.
+    const expenseDay = (e) => String(e.spent_on || e.created_at || "").slice(0, 10);
     const cash_expenses = r2(this._t("expenses")
-      .filter((e) => dayOf(e) === day && (e.method || "Cash") === "Cash")
+      .filter((e) => expenseDay(e) === day && (e.method || "Cash") === "Cash")
       .reduce((s, e) => s + num(e.amount), 0));
     const due_collected = r2(this._t("due_payments")
       .filter((d) => dayOf(d) === day && (d.method || "Cash") === "Cash")
@@ -1637,8 +1632,12 @@ window.SHOP = {
   "use strict";
   const E = root.POSEngine;
   const h = E.helpers, r2 = h.r2, num = h.num, dayKey = h.dayKey, stamp = h.stamp;
+  const pad = h.pad;
   const dayOf = (row) => String(row.created_at || row.spent_on || row.paid_on
                                || row.bought_on || "").slice(0, 10);
+  /** An expense belongs to the day the money went out, not the day it was
+   *  typed in — yesterday's rent entered this morning is yesterday's. */
+  const spendDay = (row) => String(row.spent_on || row.created_at || "").slice(0, 10);
   const inRange = (d, s, e) => d >= s && d <= e;
 
   // ---------------------------------------------------------- suppliers
@@ -1867,6 +1866,254 @@ window.SHOP = {
   };
 
 
+
+  // ==================================================================
+  //  খরচ — what the shop spends, and what the owner takes out
+  //
+  //  These are not the same thing and the difference decides whether a
+  //  shopkeeper believes the profit figure.  Rent, wages and electricity
+  //  are the cost of running the shop: they come off the profit.  Money
+  //  the owner takes home is the profit being spent — it leaves the
+  //  drawer but it is not a cost, and counting it as one makes a shop
+  //  that is doing fine look like it is losing.
+  //
+  //  So every expense carries a kind:
+  //    shop     — off the profit, out of the drawer
+  //    personal — out of the drawer only
+  // ==================================================================
+
+  const EXPENSE_KINDS = ["shop", "personal"];
+
+  E.prototype.saveExpense = function (data) {
+    data = data || {};
+    const kind = EXPENSE_KINDS.indexOf(data.kind) >= 0 ? data.kind : "shop";
+    if (data.id) {
+      const row = this._t("expenses").find(function (x) { return x.id === data.id; });
+      if (!row) return null;
+      ["category", "note", "method", "spent_on", "staff_id", "for_month",
+       "pay_kind"].forEach(function (f) {
+        if (data[f] !== undefined) row[f] = data[f];
+      });
+      if (data.amount !== undefined) row.amount = r2(data.amount);
+      if (data.kind !== undefined) row.kind = kind;
+      this.db.put("expenses", row);
+      return row;
+    }
+    const row = {
+      id: this.db.nextId("expenses"),
+      category: data.category || "Other",
+      amount: r2(data.amount), method: data.method || "Cash",
+      note: data.note || "", spent_on: data.spent_on || dayKey(),
+      kind: kind,
+      staff_id: data.staff_id || null,
+      for_month: data.for_month || null,
+      pay_kind: data.pay_kind || null,
+      user_id: data.user_id || null, created_at: stamp(),
+    };
+    this._t("expenses").push(row);
+    this.db.put("expenses", row);
+    return row;
+  };
+
+  E.prototype.deleteExpense = function (id) {
+    const t = this._t("expenses");
+    const i = t.findIndex(function (x) { return x.id === id; });
+    if (i < 0) return false;
+    t.splice(i, 1);
+    this.db.remove("expenses", id);
+    return true;
+  };
+
+  /** kind: "shop", "personal", or nothing for both. */
+  E.prototype.expensesBetween = function (start, end, kind) {
+    return this._t("expenses").filter(function (e) {
+      if (!inRange(spendDay(e), start, end)) return false;
+      if (!kind) return true;
+      return (e.kind || "shop") === kind;
+    }).sort(function (a, b) { return b.id - a.id; });
+  };
+
+  E.prototype.expenseTotal = function (start, end, kind) {
+    return r2(this.expensesBetween(start, end, kind)
+      .reduce(function (s, e) { return s + num(e.amount); }, 0));
+  };
+
+  E.prototype.expenseByCategory = function (start, end, kind) {
+    const by = {};
+    this.expensesBetween(start, end, kind).forEach(function (e) {
+      by[e.category] = r2((by[e.category] || 0) + num(e.amount));
+    });
+    return Object.keys(by).map(function (k) { return { category: k, total: by[k] }; })
+      .sort(function (a, b) { return b.total - a.total; });
+  };
+
+  // ------------------------------------------------------------ staff
+  E.prototype.saveStaff = function (data) {
+    data = data || {};
+    if (data.id) {
+      const row = this.staffMember(data.id);
+      if (!row) return null;
+      ["name", "phone", "role", "joined_on"].forEach(function (f) {
+        if (data[f] !== undefined) row[f] = data[f];
+      });
+      if (data.salary !== undefined) row.salary = r2(data.salary);
+      if (data.is_active !== undefined) row.is_active = data.is_active ? 1 : 0;
+      this.db.put("staff", row);
+      return row;
+    }
+    const row = {
+      id: this.db.nextId("staff"), name: data.name || "", phone: data.phone || "",
+      role: data.role || "", salary: r2(data.salary),
+      joined_on: data.joined_on || dayKey(), is_active: 1,
+    };
+    this._t("staff").push(row);
+    this.db.put("staff", row);
+    return row;
+  };
+
+  E.prototype.staffList = function (includeGone) {
+    return this._t("staff").filter(function (s) { return includeGone || s.is_active; })
+      .slice().sort(function (a, b) { return (a.name || "").localeCompare(b.name || ""); });
+  };
+
+  E.prototype.staffMember = function (id) {
+    return this._t("staff").find(function (s) { return s.id === id; }) || null;
+  };
+
+  /** Wages and advances are both money out of the shop, so they are
+   *  expenses like any other — they just carry the name attached. */
+  E.prototype.payStaff = function (data) {
+    data = data || {};
+    const who = this.staffMember(data.staff_id);
+    if (!who || r2(data.amount) <= 0) return null;
+    const advance = data.pay_kind === "advance";
+    return this.saveExpense({
+      category: advance ? "Staff advance" : "Salary",
+      amount: data.amount, method: data.method || "Cash",
+      note: data.note || "", spent_on: data.paid_on || dayKey(),
+      kind: "shop", staff_id: who.id,
+      for_month: data.for_month || dayKey().slice(0, 7),
+      pay_kind: advance ? "advance" : "salary",
+      user_id: data.user_id || null,
+    });
+  };
+
+  E.prototype.staffLedger = function (staff_id, limit) {
+    const rows = this._t("expenses").filter(function (e) { return e.staff_id === staff_id; })
+      .sort(function (a, b) { return String(b.spent_on).localeCompare(String(a.spent_on))
+        || b.id - a.id; });
+    return limit ? rows.slice(0, limit) : rows;
+  };
+
+  /** What one person has been paid for a month, and what is left. */
+  E.prototype.staffMonth = function (staff_id, month) {
+    month = month || dayKey().slice(0, 7);
+    const who = this.staffMember(staff_id);
+    if (!who) return null;
+    let salary = 0, advance = 0;
+    this._t("expenses").forEach(function (e) {
+      if (e.staff_id !== staff_id) return;
+      if ((e.for_month || String(e.spent_on).slice(0, 7)) !== month) return;
+      if (e.pay_kind === "advance") advance += num(e.amount);
+      else salary += num(e.amount);
+    });
+    const paid = r2(salary + advance);
+    return {
+      row: who, month: month, salary_due: r2(num(who.salary)),
+      paid_salary: r2(salary), paid_advance: r2(advance), paid: paid,
+      left: r2(Math.max(num(who.salary) - paid, 0)),
+    };
+  };
+
+  E.prototype.staffMonthAll = function (month) {
+    const self = this;
+    return this.staffList().map(function (s) { return self.staffMonth(s.id, month); });
+  };
+
+  // -------------------------------------------------- recurring costs
+  /** Rent and wages do not change from month to month, so they are set
+   *  once and posted with one tap when the month comes round. */
+  E.prototype.saveRecurring = function (data) {
+    data = data || {};
+    if (data.id) {
+      const row = this._t("recurring").find(function (x) { return x.id === data.id; });
+      if (!row) return null;
+      ["label", "category", "kind", "method", "staff_id"].forEach(function (f) {
+        if (data[f] !== undefined) row[f] = data[f];
+      });
+      if (data.amount !== undefined) row.amount = r2(data.amount);
+      if (data.day_of_month !== undefined) {
+        row.day_of_month = Math.min(Math.max(parseInt(data.day_of_month, 10) || 1, 1), 28);
+      }
+      if (data.is_active !== undefined) row.is_active = data.is_active ? 1 : 0;
+      this.db.put("recurring", row);
+      return row;
+    }
+    const row = {
+      id: this.db.nextId("recurring"),
+      label: data.label || "", category: data.category || "Other",
+      amount: r2(data.amount), kind: data.kind === "personal" ? "personal" : "shop",
+      method: data.method || "Cash",
+      day_of_month: Math.min(Math.max(parseInt(data.day_of_month, 10) || 1, 1), 28),
+      staff_id: data.staff_id || null, is_active: 1, last_done: "",
+    };
+    this._t("recurring").push(row);
+    this.db.put("recurring", row);
+    return row;
+  };
+
+  E.prototype.recurringList = function () {
+    return this._t("recurring").filter(function (r) { return r.is_active; })
+      .slice().sort(function (a, b) { return a.day_of_month - b.day_of_month; });
+  };
+
+  E.prototype.deleteRecurring = function (id) {
+    const t = this._t("recurring");
+    const i = t.findIndex(function (x) { return x.id === id; });
+    if (i < 0) return false;
+    t.splice(i, 1);
+    this.db.remove("recurring", id);
+    return true;
+  };
+
+  /** Everything not yet posted for this month, with the ones whose day
+   *  has already passed marked so the screen can shout about them. */
+  E.prototype.recurringPending = function (month) {
+    month = month || dayKey().slice(0, 7);
+    const today = dayKey();
+    const dayNow = parseInt(today.slice(8, 10), 10);
+    const thisMonth = today.slice(0, 7);
+    return this.recurringList().filter(function (r) {
+      return (r.last_done || "") !== month;
+    }).map(function (r) {
+      const overdue = month < thisMonth
+        || (month === thisMonth && dayNow >= r.day_of_month);
+      return { row: r, month: month, overdue: overdue };
+    });
+  };
+
+  E.prototype.runRecurring = function (id, opts) {
+    opts = opts || {};
+    const r = this._t("recurring").find(function (x) { return x.id === id; });
+    if (!r) return null;
+    const month = opts.month || dayKey().slice(0, 7);
+    if ((r.last_done || "") === month) return null;       // never twice
+    const day = month + "-" + pad(Math.min(r.day_of_month, 28), 2);
+    const today = dayKey();
+    const spent_on = day > today ? today : day;
+    const row = this.saveExpense({
+      category: r.category, amount: opts.amount !== undefined ? opts.amount : r.amount,
+      method: opts.method || r.method, note: r.label,
+      spent_on: spent_on, kind: r.kind, staff_id: r.staff_id || null,
+      for_month: month,
+      pay_kind: r.staff_id ? "salary" : null,
+      user_id: opts.user_id || null,
+    });
+    r.last_done = month;
+    this.db.put("recurring", r);
+    return row;
+  };
+
   // ==================================================================
   //  বাকি — the credit book
   //
@@ -2034,7 +2281,7 @@ window.SHOP = {
   const TABLES = ["products", "sales", "sale_items", "stock_moves", "customers",
     "due_payments", "expenses", "wallet_txns", "day_close", "users",
     "suppliers", "purchases", "purchase_items", "supplier_payments",
-    "held_bills", "photos"];
+    "held_bills", "photos", "staff", "recurring"];
 
   // ------------------------------------------------------------ shop list
   function readShops() {
@@ -2262,7 +2509,7 @@ window.SHOP = {
     "Dashboard":"ড্যাশবোর্ড","New sale":"নতুন বিক্রয়","Products":"পণ্য",
     "Customers":"কাস্টমার","Suppliers":"সাপ্লায়ার","Reports":"রিপোর্ট",
     "Profit & cash":"লাভ ও ক্যাশ","Mobile banking":"মোবাইল ব্যাংকিং",
-    "Settings":"সেটিংস","More":"আরও","Sale":"বিক্রয়","Dues":"বাকি",
+    "Settings":"সেটিংস","More":"আরও","Sale":"বিক্রয়","Dues":"বাকি","Expenses":"খরচ",
     // common
     "Save":"সেভ","Cancel":"বাতিল","Delete":"মুছুন","Edit":"এডিট","Close":"বন্ধ",
     "Add":"যোগ","Search":"খুঁজুন","Today":"আজ","Yesterday":"গতকাল",
@@ -2272,7 +2519,7 @@ window.SHOP = {
     "Qty":"পরিমাণ","Price":"দাম","Cost":"ক্রয়মূল্য","Stock":"স্টক",
     "Unit":"একক","Category":"ধরন","Actions":"কাজ","Print":"প্রিন্ট",
     "Yes":"হ্যাঁ","No":"না","All":"সব","None":"কিছু নেই","Back":"পিছনে",
-    "Paid":"পরিশোধ","Due":"বাকি","Cash":"ক্যাশ","Method":"যেভাবে",
+    "Paid":"পরিশোধ","Due":"বাকি","Cash":"ক্যাশ","Method":"যেভাবে","Paid by":"যেভাবে দিলেন",
     "Excel":"এক্সেল","Download":"ডাউনলোড","Nothing here yet":"এখনো কিছু নেই",
     "Are you sure?":"আপনি কি নিশ্চিত?","This cannot be undone.":"এটা আর ফেরানো যাবে না।",
     "Required":"অবশ্যই দিতে হবে","Enter an amount":"টাকার পরিমাণ লিখুন",
@@ -2745,6 +2992,7 @@ window.SHOP = {
     camera:    "M3.5 8.5h3l1.6-2.4h7.8l1.6 2.4h3v10.4h-17V8.5Zm8.5 8.2a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z",
     alert:     "M12 3.5 21 19.5H3L12 3.5Zm0 5.4v5m0 2.6h.01",
     page:      "M6 2.6h7.6L19 8v13.4H6V2.6Zm7.4 0V8.2H19M9 12.5h6M9 16h6",
+    expense:   "M3 7.5h18v12H3v-12Zm0 0 3-4h12l3 4M8.5 12h7m-7 3.5h4",
     shop:      "M4 9.5h16V20H4V9.5Zm-.5-1.2L5.2 4h13.6l1.7 4.3a3 3 0 0 1-5.3 2.2 3 3 0 0 1-5.3 0 3 3 0 0 1-5.3-2.2ZM9.5 20v-5.5h5V20",
   };
 
@@ -2926,6 +3174,7 @@ window.SHOP = {
     ["dues",      "dues",      "Dues"],
     ["customers", "customers", "Customers"],
     ["suppliers", "suppliers", "Suppliers"],
+    ["expenses",  "expense",   "Expenses"],
     ["reports",   "reports",   "Reports"],
     ["money",     "money",     "Profit & cash"],
     ["agent",     "agent",     "Mobile banking"],
@@ -4273,7 +4522,7 @@ window.SHOP = {
       if (!rows.length) return card.appendChild(el("div", { class: "empty" }, [
         el("div", { class: "big", text: "👥" }), el("div", { text: T("Nothing here yet") })]));
       const tbl = el("table", { class: "tbl" });
-      tbl.className = "tbl tbl-cards";
+      tbl.className = "tbl tbl-cards cust-tbl";
       tbl.appendChild(el("thead", {}, [el("tr", {}, [
         el("th", { text: T("Name") }), el("th", { class: "fit", text: T("Phone") }),
         el("th", { class: "fit right pad", text: T("Due") }),
@@ -5240,72 +5489,21 @@ window.SHOP = {
     }
 
     function drawExpenses() {
-      const r = ranges()[rangeKey];
-      body.appendChild(rangePicker(draw));
-      const rows = A.eng.expensesBetween(r.start, r.end);
-      const total = A.eng.expenseTotal(r.start, r.end);
-      body.appendChild(el("div", { class: "card card-pad spread",
-        style: { marginBottom: "var(--gap)" } }, [
-        el("div", {}, [el("div", { class: "tiny faint", text: T("Expenses") }),
-          el("strong", { style: { fontSize: "1.4rem" }, text: A.money(total) })]),
-        el("div", { class: "row", style: { gap: "8px" } }, [
-          el("button", { class: "btn btn-sm", text: "⇩ " + T("Excel"), onclick: function () {
-            A.xlsx(T("Expenses"), [["Date", "Category", "Method", "Note", "Amount"]]
-              .concat(rows.map(function (e) {
-                return [e.spent_on, e.category, e.method, e.note, e.amount]; })), "expenses");
-          } }),
-          el("button", { class: "btn btn-sm btn-pri", text: "＋ " + T("Add expense"),
-            onclick: addExpense }),
-        ]),
+      /* Expenses grew their own screen — rent, wages, regular bills and
+         the owner's own spending.  Keeping a second, thinner copy here
+         would only let the two disagree. */
+      body.appendChild(el("div", { class: "card card-pad stack center",
+        style: { alignItems: "center", gap: "12px", padding: "38px 20px" } }, [
+        el("div", { style: { color: "var(--faint)" } }, [A.icon("expense")]),
+        el("h3", { style: { fontSize: "1.1rem" },
+          text: root.isBn() ? "খরচের নিজের পাতা আছে" : "Expenses have their own screen" }),
+        el("div", { class: "muted small", style: { maxWidth: "420px" },
+          text: root.isBn()
+            ? "দোকানের খরচ, নিয়মিত খরচ, কর্মচারীর বেতন আর নিজের খরচ — সব ওখানে।"
+            : "Shop costs, regular bills, wages and personal spending are all there." }),
+        el("button", { class: "btn btn-pri", text: root.isBn() ? "খরচে যান" : "Open expenses",
+          onclick: function () { A.go("expenses"); } }),
       ]));
-      const card = el("div", { class: "card" });
-      if (!rows.length) card.appendChild(el("div", { class: "empty" }, [
-        el("div", { class: "big", text: "🧾" }), el("div", { text: T("Nothing here yet") })]));
-      else {
-        const tbl = el("table", { class: "tbl" });
-        tbl.appendChild(el("thead", {}, [el("tr", {}, [
-          el("th", { text: T("Date") }), el("th", { text: T("Category") }),
-          el("th", { text: T("Method") }), el("th", { class: "right", text: T("Amount") })])]));
-        const tb = el("tbody");
-        rows.forEach(function (e) {
-          tb.appendChild(el("tr", {}, [
-            el("td", { class: "nowrap", text: A.dateText(e.spent_on) }),
-            el("td", {}, [el("div", { text: T(e.category) }),
-              e.note ? el("div", { class: "tiny faint", text: e.note }) : null]),
-            el("td", {}, [el("span", { class: "chip", text: T(e.method || "Cash") })]),
-            el("td", { class: "right", style: { fontWeight: "700" }, text: A.money(e.amount) }),
-          ]));
-        });
-        tbl.appendChild(tb);
-        card.appendChild(el("div", { class: "scroll-x" }, [tbl]));
-      }
-      body.appendChild(card);
-    }
-
-    function addExpense() {
-      const m = A.modal({ title: T("Add expense") });
-      const cats = ["Shop rent", "Electricity", "Transport", "Salary", "Supplies",
-                    "Repairs", "Other"];
-      const cat = A.field(T("Category"), { type: "select", value: cats[0],
-        options: cats.map(function (c) { return { value: c, label: T(c) }; }) });
-      const amt = A.field(T("Amount"), { type: "number", inputmode: "decimal", min: 0 });
-      const how = A.field(T("Paid by"), { type: "select", value: "Cash",
-        options: ["Cash", "bKash", "Nagad", "Rocket", "Bank"] });
-      const when = A.field(T("Date"), { type: "date", value: H.dayKey() });
-      const note = A.field(T("Note"), { type: "textarea" });
-      m.body.appendChild(cat);
-      m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
-        [el("div", { class: "grow" }, [amt]), el("div", { class: "grow" }, [how])]));
-      m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [when]));
-      m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [note]));
-      m.footer.appendChild(el("button", { class: "btn", text: T("Cancel"), onclick: m.close }));
-      m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Save"),
-        onclick: function () {
-          if (amt.num(0) <= 0) return A.toast(T("Enter an amount"), "warn");
-          A.eng.addExpense(cat.val(), amt.num(0), note.val(), when.val(),
-            A.user ? A.user.id : null, how.val());
-          m.close(); A.toast(T("Saved"), "ok"); draw();
-        } }));
     }
 
     function drawClose() {
@@ -5659,6 +5857,635 @@ window.SHOP = {
       ]));
     }
     drawBook();
+  });
+})(window);
+</script>
+<script>
+/* =================================================================
+   খরচ — where the money went.
+
+   Four books on one screen, because a shopkeeper thinks of them as
+   four different questions:
+     দোকানের খরচ  what running the shop cost this month
+     নিয়মিত       the bills that are the same every month
+     কর্মচারী      who is owed what, and what they have drawn
+     নিজের খরচ    what the owner took home — never a shop cost
+   ================================================================= */
+(function (root) {
+  "use strict";
+  const A = root.App, el = A.el, T = root.T;
+  const H = root.POSEngine.helpers;
+  const bn = function () { return root.isBn(); };
+  const L = function (b, e) { return bn() ? b : e; };
+
+  /* The stored value stays English so a shop can switch language and
+     keep its history readable; only the label is translated. */
+  const CATS = [
+    ["Shop rent",   "দোকান ভাড়া"],
+    ["Electricity", "বিদ্যুৎ বিল"],
+    ["Salary",      "কর্মচারীর বেতন"],
+    ["Transport",   "গাড়ি / পরিবহন"],
+    ["Tea & snacks", "চা-নাস্তা"],
+    ["Repairs",     "মেরামত"],
+    ["Internet",    "ইন্টারনেট / মোবাইল"],
+    ["Packaging",   "প্যাকেট / ব্যাগ"],
+    ["Municipal",   "ট্রেড লাইসেন্স / সরকারি"],
+    ["Staff advance", "কর্মচারীর আগাম"],
+    ["Other",       "অন্যান্য"],
+  ];
+  const PERSONAL_CATS = [
+    ["Household",  "ঘরের বাজার"],
+    ["Pocket",     "হাত খরচ"],
+    ["Education",  "ছেলেমেয়ের পড়াশোনা"],
+    ["Medical",    "চিকিৎসা"],
+    ["Rent (home)", "বাসা ভাড়া"],
+    ["Other",      "অন্যান্য"],
+  ];
+  function catLabel(value) {
+    const hit = CATS.concat(PERSONAL_CATS).find(function (c) { return c[0] === value; });
+    return hit ? (bn() ? hit[1] : hit[0]) : value;
+  }
+  function catOptions(kind) {
+    const own = (A.eng.setting("own_categories", "") || "")
+      .split("\n").map(function (x) { return x.trim(); }).filter(Boolean);
+    return (kind === "personal" ? PERSONAL_CATS : CATS)
+      .map(function (c) { return { value: c[0], label: bn() ? c[1] : c[0] }; })
+      .concat(own.map(function (c) { return { value: c, label: c }; }));
+  }
+
+  const METHODS = ["Cash", "bKash", "Nagad", "Rocket", "Bank"];
+
+  function monthName(key) {
+    const d = new Date(key + "-01T00:00:00");
+    const m = bn()
+      ? ["জানুয়ারি","ফেব্রুয়ারি","মার্চ","এপ্রিল","মে","জুন",
+         "জুলাই","আগস্ট","সেপ্টেম্বর","অক্টোবর","নভেম্বর","ডিসেম্বর"]
+      : ["January","February","March","April","May","June",
+         "July","August","September","October","November","December"];
+    const y = String(d.getFullYear());
+    return m[d.getMonth()] + " " + (bn() ? root.bnDigits(y) : y);
+  }
+  function monthBounds(key) {
+    const d = new Date(key + "-01T00:00:00");
+    const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    return { start: key + "-01", end: H.dayKey(last) };
+  }
+  function shiftMonth(key, by) {
+    const d = new Date(key + "-01T00:00:00");
+    d.setMonth(d.getMonth() + by);
+    return H.dayKey(d).slice(0, 7);
+  }
+
+  /* --------------------------------------------------------- dialogs */
+  function expenseDialog(opts) {
+    opts = opts || {};
+    const kind = opts.kind === "personal" ? "personal" : "shop";
+    const row = opts.row || null;
+    const m = A.modal({ title: row
+      ? L("খরচ বদলান", "Edit expense")
+      : (kind === "personal" ? L("নিজের খরচ", "Personal expense")
+                             : L("দোকানের খরচ", "Shop expense")) });
+
+    const cats = catOptions(kind);
+    const cat = A.field(T("Category"), { type: "select",
+      value: row ? row.category : cats[0].value, options: cats });
+    const amt = A.field(L("কত টাকা", "Amount"), { type: "number", inputmode: "decimal",
+      min: 0, value: row ? row.amount : "", placeholder: T("amount"), key: "exp-amt" });
+    const how = A.field(L("যেভাবে দিলেন", "Paid by"), { type: "select",
+      value: row ? (row.method || "Cash") : "Cash", options: METHODS });
+    const when = A.field(L("কোন তারিখে", "Date"), { type: "date",
+      value: row ? row.spent_on : H.dayKey() });
+    const note = A.field(T("Note"), { value: row ? row.note : "",
+      placeholder: L("কিসের জন্য (ইচ্ছা)", "what for (optional)") });
+
+    m.body.appendChild(cat);
+    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
+      [el("div", { class: "grow" }, [amt]), el("div", { class: "grow" }, [how])]));
+    m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [when]));
+    m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [note]));
+    if (kind === "personal") {
+      m.body.appendChild(el("div", { class: "tiny muted", style: { marginTop: "12px" } ,
+        text: L("এই টাকা দোকানের খরচ নয় — লাভ কমবে না, শুধু ক্যাশ কমবে।",
+                "Not a shop cost: it leaves the drawer but does not reduce profit.") }));
+    }
+
+    m.footer.appendChild(el("button", { class: "btn", text: T("Cancel"), onclick: m.close }));
+    if (row) {
+      m.footer.appendChild(el("button", { class: "btn btn-bad", text: T("Delete"),
+        onclick: function () {
+          A.confirm(T("Delete"), T("This cannot be undone."), { danger: true })
+            .then(function (y) {
+              if (!y) return;
+              A.eng.deleteExpense(row.id); m.close();
+              A.toast(T("Deleted"), "ok"); A.refresh();
+            });
+        } }));
+    }
+    m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Save"),
+      onclick: function () {
+        if (amt.num(0) <= 0) { A.toast(T("Enter an amount"), "warn"); return amt.input.focus(); }
+        A.eng.saveExpense({ id: row ? row.id : null, category: cat.val(),
+          amount: amt.num(0), method: how.val(), note: note.val(),
+          spent_on: when.val() || H.dayKey(), kind: kind,
+          user_id: A.user ? A.user.id : null });
+        m.close(); A.toast(T("Saved"), "ok"); A.refresh();
+      } }));
+  }
+
+  function staffDialog(row) {
+    const m = A.modal({ title: row ? row.name : L("নতুন কর্মচারী", "New staff") });
+    row = row || {};
+    const name = A.field(T("Name") + " *", { value: row.name || "" });
+    const phone = A.field(T("Phone"), { value: row.phone || "", inputmode: "tel",
+      placeholder: "01XXXXXXXXX" });
+    const role = A.field(L("কাজ", "Role"), { value: row.role || "",
+      placeholder: L("যেমন: দোকান সহকারী", "e.g. shop assistant") });
+    const salary = A.field(L("মাসিক বেতন", "Monthly salary"), { type: "number",
+      inputmode: "decimal", min: 0, value: row.salary || "", placeholder: T("amount"),
+      key: "staff-salary" });
+    const joined = A.field(L("কবে যোগ দিয়েছে", "Joined on"), { type: "date",
+      value: row.joined_on || H.dayKey() });
+    m.body.appendChild(name);
+    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
+      [el("div", { class: "grow" }, [phone]), el("div", { class: "grow" }, [role])]));
+    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
+      [el("div", { class: "grow" }, [salary]), el("div", { class: "grow" }, [joined])]));
+    m.footer.appendChild(el("button", { class: "btn", text: T("Cancel"), onclick: m.close }));
+    if (row.id) {
+      m.footer.appendChild(el("button", { class: "btn", text: L("কাজ ছেড়েছে", "Left the job"),
+        onclick: function () {
+          A.eng.saveStaff({ id: row.id, is_active: 0 });
+          m.close(); A.toast(T("Saved"), "ok"); A.refresh();
+        } }));
+    }
+    m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Save"),
+      onclick: function () {
+        if (!name.val()) return A.toast(T("Required"), "warn");
+        A.eng.saveStaff({ id: row.id, name: name.val(), phone: phone.val(),
+          role: role.val(), salary: salary.num(0), joined_on: joined.val() });
+        m.close(); A.toast(T("Saved"), "ok"); A.refresh();
+      } }));
+  }
+
+  function payDialog(info, month) {
+    const m = A.modal({ title: L("বেতন দিন", "Pay") + " · " + info.row.name });
+    m.body.appendChild(el("div", { class: "card card-pad spread",
+      style: { marginBottom: "12px" } }, [
+      el("span", { class: "muted", text: L("এ মাসে এখনো পাওনা", "Owed this month") }),
+      el("strong", { style: { fontSize: "1.2rem", color: "var(--warn)" },
+        text: A.money(info.left) }),
+    ]));
+    const amt = A.field(L("কত টাকা", "Amount"), { type: "number", inputmode: "decimal",
+      min: 0, value: info.left || "", key: "pay-amt" });
+    const what = A.field(L("কী হিসেবে", "As"), { type: "select", value: "salary",
+      options: [{ value: "salary", label: L("বেতন", "Salary") },
+                { value: "advance", label: L("আগাম", "Advance") }] });
+    const how = A.field(L("যেভাবে দিলেন", "Paid by"), { type: "select", value: "Cash",
+      options: METHODS });
+    const when = A.field(L("কোন তারিখে", "Date"), { type: "date", value: H.dayKey() });
+    const note = A.field(T("Note"), { value: "" });
+    m.body.appendChild(amt);
+    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
+      [el("div", { class: "grow" }, [what]), el("div", { class: "grow" }, [how])]));
+    m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [when]));
+    m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [note]));
+    m.footer.appendChild(el("button", { class: "btn", text: T("Cancel"), onclick: m.close }));
+    m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Save"),
+      onclick: function () {
+        if (amt.num(0) <= 0) { A.toast(T("Enter an amount"), "warn"); return amt.input.focus(); }
+        A.eng.payStaff({ staff_id: info.row.id, amount: amt.num(0),
+          pay_kind: what.val(), method: how.val(), note: note.val(),
+          paid_on: when.val() || H.dayKey(), for_month: month,
+          user_id: A.user ? A.user.id : null });
+        m.close(); A.toast(T("Saved"), "ok"); A.refresh();
+      } }));
+  }
+
+  function recurringDialog(row) {
+    const m = A.modal({ title: row ? row.label
+      : L("নিয়মিত খরচ যোগ করুন", "New regular cost") });
+    row = row || {};
+    const label = A.field(L("নাম", "Name") + " *", { value: row.label || "",
+      placeholder: L("যেমন: দোকান ভাড়া", "e.g. shop rent") });
+    const cats = catOptions(row.kind === "personal" ? "personal" : "shop");
+    const cat = A.field(T("Category"), { type: "select",
+      value: row.category || cats[0].value, options: cats });
+    const amt = A.field(L("কত টাকা", "Amount"), { type: "number", inputmode: "decimal",
+      min: 0, value: row.amount || "", placeholder: T("amount"), key: "rec-amt" });
+    const day = A.field(L("মাসের কত তারিখে", "Day of the month"), { type: "number",
+      inputmode: "numeric", min: 1, value: row.day_of_month || 1 });
+    const how = A.field(L("যেভাবে দেন", "Paid by"), { type: "select",
+      value: row.method || "Cash", options: METHODS });
+    const kind = A.field(L("কার খরচ", "Whose cost"), { type: "select",
+      value: row.kind || "shop",
+      options: [{ value: "shop", label: L("দোকানের", "Shop") },
+                { value: "personal", label: L("নিজের", "Personal") }] });
+    m.body.appendChild(label);
+    m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [cat]));
+    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
+      [el("div", { class: "grow" }, [amt]), el("div", { class: "grow" }, [day])]));
+    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
+      [el("div", { class: "grow" }, [how]), el("div", { class: "grow" }, [kind])]));
+    m.body.appendChild(el("div", { class: "tiny muted", style: { marginTop: "12px" },
+      text: L("প্রতি মাসে নিজে থেকে বসবে না — মনে করিয়ে দিবে, আপনি এক চাপে বসাবেন।",
+              "It will not post itself — you will be reminded and post it with one tap.") }));
+    m.footer.appendChild(el("button", { class: "btn", text: T("Cancel"), onclick: m.close }));
+    if (row.id) {
+      m.footer.appendChild(el("button", { class: "btn btn-bad", text: T("Delete"),
+        onclick: function () {
+          A.eng.deleteRecurring(row.id); m.close();
+          A.toast(T("Deleted"), "ok"); A.refresh();
+        } }));
+    }
+    m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Save"),
+      onclick: function () {
+        if (!label.val()) return A.toast(T("Required"), "warn");
+        if (amt.num(0) <= 0) return A.toast(T("Enter an amount"), "warn");
+        A.eng.saveRecurring({ id: row.id, label: label.val(), category: cat.val(),
+          amount: amt.num(0), day_of_month: day.num(1), method: how.val(),
+          kind: kind.val() });
+        m.close(); A.toast(T("Saved"), "ok"); A.refresh();
+      } }));
+  }
+
+  /* ------------------------------------------------------- the screen */
+  A.register("expenses", function (page) {
+    const e = A.eng;
+    let tab = (A.params && A.params.tab) || "shop";
+    let month = (A.params && A.params.month) || H.dayKey().slice(0, 7);
+
+    const head = el("div", { class: "card card-pad repbar" });
+    const seg = el("div", { class: "seg" });
+    const TABS = [
+      ["shop", L("দোকানের খরচ", "Shop")],
+      ["regular", L("নিয়মিত", "Regular")],
+      ["staff", L("কর্মচারী", "Staff")],
+      ["personal", L("নিজের খরচ", "Personal")],
+    ];
+    TABS.forEach(function (t) {
+      seg.appendChild(el("button", { class: tab === t[0] ? "on" : "", text: t[1],
+        onclick: function () { tab = t[0]; draw(); } }));
+    });
+    head.appendChild(seg);
+    const label = el("strong", { class: "lbl" });
+    head.appendChild(el("div", { class: "stepper" }, [
+      el("button", { class: "btn btn-sm btn-icon", text: "‹",
+        onclick: function () { month = shiftMonth(month, -1); draw(); } }),
+      label,
+      el("button", { class: "btn btn-sm btn-icon", text: "›",
+        onclick: function () { month = shiftMonth(month, 1); draw(); } }),
+    ]));
+    page.appendChild(head);
+
+    const body = el("div", { style: { marginTop: "var(--gap)" } });
+    page.appendChild(body);
+
+    function draw() {
+      /* Saving anything calls refresh(), which rebuilds the screen from
+         A.params — so the chosen tab and month live there, or every save
+         would dump the shopkeeper back on the first tab. */
+      A.params = A.params || {};
+      A.params.tab = tab; A.params.month = month;
+      A.$$(".seg button", head).forEach(function (b, i) {
+        b.className = TABS[i] && TABS[i][0] === tab ? "on" : "";
+      });
+      label.textContent = monthName(month);
+      A.clear(body);
+      if (tab === "shop") drawSpend("shop");
+      else if (tab === "personal") drawSpend("personal");
+      else if (tab === "regular") drawRegular();
+      else drawStaff();
+    }
+
+    /* ---- one month of spending, this month against last ---- */
+    function drawSpend(kind) {
+      const r = monthBounds(month);
+      const prev = monthBounds(shiftMonth(month, -1));
+      const total = e.expenseTotal(r.start, r.end, kind);
+      const was = e.expenseTotal(prev.start, prev.end, kind);
+      const rows = e.expensesBetween(r.start, r.end, kind);
+      const byCat = e.expenseByCategory(r.start, r.end, kind);
+      const diff = Math.round((total - was) * 100) / 100;
+
+      body.appendChild(el("div", { class: "grid tiles3" }, [
+        el("div", { class: "tile tile-hero" }, [
+          el("div", { class: "k", text: kind === "personal"
+            ? L("এ মাসে নিজে নিয়েছেন", "Taken this month")
+            : L("এ মাসের খরচ", "Spent this month") }),
+          el("div", { class: "v", text: A.money(total) }),
+          el("div", { class: "s", text: (bn() ? root.bnDigits(String(rows.length)) : rows.length)
+            + L(" টি এন্ট্রি", " entries") }),
+        ]),
+        el("div", { class: "tile" }, [
+          el("div", { class: "k", text: L("গত মাসে", "Last month") }),
+          el("div", { class: "v", text: A.money(was) }),
+          el("div", { class: "s " + (diff > 0 ? "bad-t" : diff < 0 ? "ok-t" : ""),
+            text: !was && !total ? ""
+              : (diff === 0 ? L("একই", "the same")
+                : (diff > 0 ? L("বেশি ", "up ") : L("কম ", "down "))
+                  + A.money(Math.abs(diff))) }),
+        ]),
+        el("div", { class: "tile" }, [
+          el("div", { class: "k", text: L("সবচেয়ে বেশি", "Biggest") }),
+          el("div", { class: "v", style: { fontSize: "1.15rem" },
+            text: byCat.length ? catLabel(byCat[0].category) : "—" }),
+          el("div", { class: "s", text: byCat.length ? A.money(byCat[0].total) : "" }),
+        ]),
+      ]));
+
+      const bar = el("div", { class: "toolbar", style: { marginTop: "var(--gap)" } }, [
+        el("div", { class: "grow" }),
+        el("button", { class: "btn btn-sm", text: "⬇ " + T("Excel"), onclick: function () {
+          A.xlsx(kind === "personal" ? L("নিজের খরচ", "Personal") : L("দোকানের খরচ", "Shop"),
+            [[T("Date"), T("Category"), T("Method"), T("Note"), T("Amount")]]
+            .concat(rows.map(function (x) {
+              return [x.spent_on, catLabel(x.category), x.method, x.note, x.amount]; })),
+            "expenses-" + kind + "-" + month);
+        } }),
+        el("button", { class: "btn btn-sm btn-pri",
+          text: "＋ " + (kind === "personal" ? L("নিজের খরচ", "Personal")
+                                             : L("খরচ যোগ", "Add expense")),
+          onclick: function () { expenseDialog({ kind: kind }); } }),
+      ]);
+      body.appendChild(bar);
+
+      if (kind === "personal") {
+        body.appendChild(el("div", { class: "card card-pad note-soft",
+          style: { marginTop: "var(--gap)" } }, [
+          el("strong", { text: L("এটা দোকানের খরচ নয়", "This is not a shop cost") }),
+          el("div", { class: "small muted", style: { marginTop: "4px" },
+            text: L("ঘরের বাজার, হাত খরচ — এগুলো লাভ থেকে বাদ যায় না। লাভ যা হয়েছে তাই থাকে, শুধু ক্যাশ কমে। তাই আলাদা রাখা।",
+                    "Household and pocket money do not reduce the shop's profit. They only take cash out, so they are kept apart.") }),
+        ]));
+      }
+
+      if (byCat.length > 1) {
+        const peak = byCat[0].total || 1;
+        body.appendChild(el("div", { class: "card card-pad", style: { marginTop: "var(--gap)" } },
+          [el("h3", { class: "sec", text: L("কোন খাতে কত", "Where it went") })].concat(
+            byCat.map(function (c) {
+              return el("div", { class: "rankrow", style: { marginBottom: "10px" } }, [
+                el("span", { class: "grow" }, [
+                  el("div", { class: "spread small" }, [
+                    el("span", { class: "grow nowrap", style: { overflow: "hidden",
+                      textOverflow: "ellipsis", fontWeight: "600" },
+                      text: catLabel(c.category) }),
+                    el("span", { class: "muted nowrap", text: A.money(c.total) }),
+                  ]),
+                  el("div", { class: "bar", style: { marginTop: "5px" } },
+                    [el("i", { style: { width: Math.max((c.total / peak) * 100, 3) + "%" } })]),
+                ]),
+              ]);
+            }))));
+      }
+
+      const card = el("div", { class: "card", style: { marginTop: "var(--gap)" } });
+      if (!rows.length) {
+        card.appendChild(el("div", { class: "empty" }, [
+          el("div", { class: "big", text: "🧾" }),
+          el("div", { text: L("এ মাসে কিছু লেখা হয়নি", "Nothing recorded this month") }),
+        ]));
+      } else {
+        const tbl = el("table", { class: "tbl tbl-cards" });
+        tbl.appendChild(el("thead", {}, [el("tr", {}, [
+          el("th", { text: T("Date") }), el("th", { text: T("Category") }),
+          el("th", { class: "fit", text: T("Method") }),
+          el("th", { class: "fit right", text: T("Amount") }),
+        ])]));
+        const tb = el("tbody");
+        rows.forEach(function (x) {
+          const who = x.staff_id ? e.staffMember(x.staff_id) : null;
+          tb.appendChild(el("tr", { class: "tap", onclick: function () {
+            expenseDialog({ kind: x.kind || "shop", row: x }); } }, [
+            el("td", { class: "fit nowrap small muted c-hide-phone",
+              text: A.dateText(x.spent_on) }),
+            el("td", { class: "c-name" }, [
+              el("div", { style: { fontWeight: "700" }, text: catLabel(x.category) }),
+              el("div", { class: "tiny faint", text: [A.dateText(x.spent_on),
+                who ? who.name : "", x.note].filter(Boolean).join(" · ") }),
+            ]),
+            el("td", { class: "fit c-stock" },
+              [el("span", { class: "chip", text: x.method || "Cash" })]),
+            el("td", { class: "fit right c-price", style: { fontWeight: "700" },
+              text: A.money(x.amount) }),
+          ]));
+        });
+        tbl.appendChild(tb);
+        card.appendChild(el("div", { class: "scroll-x" }, [tbl]));
+      }
+      body.appendChild(card);
+    }
+
+    /* ---- the bills that repeat ---- */
+    function drawRegular() {
+      const pending = e.recurringPending(month);
+      const all = e.recurringList();
+      const monthly = all.reduce(function (s, r) { return s + Number(r.amount || 0); }, 0);
+
+      body.appendChild(el("div", { class: "grid tiles3" }, [
+        el("div", { class: "tile tile-hero" }, [
+          el("div", { class: "k", text: L("প্রতি মাসে বাঁধা খরচ", "Fixed every month") }),
+          el("div", { class: "v", text: A.money(monthly) }),
+          el("div", { class: "s", text: (bn() ? root.bnDigits(String(all.length)) : all.length)
+            + L(" টি", " items") }),
+        ]),
+        el("div", { class: "tile" }, [
+          el("div", { class: "k", text: L("এ মাসে বাকি", "Still to post") }),
+          el("div", { class: "v " + (pending.length ? "warn-t" : "ok-t"),
+            text: bn() ? root.bnDigits(String(pending.length)) : String(pending.length) }),
+        ]),
+      ]));
+
+      body.appendChild(el("div", { class: "toolbar", style: { marginTop: "var(--gap)" } }, [
+        el("div", { class: "grow" }),
+        el("button", { class: "btn btn-sm btn-pri",
+          text: "＋ " + L("নিয়মিত খরচ যোগ", "Add a regular cost"),
+          onclick: function () { recurringDialog(null); } }),
+      ]));
+
+      if (pending.length) {
+        const box = el("div", { class: "card", style: { marginTop: "var(--gap)" } }, [
+          el("div", { class: "card-pad spread", style: { paddingBottom: "0" } }, [
+            el("h3", { class: "sec", style: { marginBottom: "0" },
+              text: L("এখনো দেওয়া হয়নি", "Not posted yet") }),
+            el("button", { class: "btn btn-sm", text: L("সব বসান", "Post all"),
+              onclick: function () {
+                A.confirm(L("সব বসাবো?", "Post all?"),
+                  L("এ মাসের বাকি সবগুলো খরচ একসাথে বসে যাবে।",
+                    "Every pending item for this month will be recorded.")).then(function (y) {
+                  if (!y) return;
+                  pending.forEach(function (p) { e.runRecurring(p.row.id, { month: month }); });
+                  A.toast(T("Saved"), "ok"); A.refresh();
+                });
+              } }),
+          ]),
+        ]);
+        const list = el("div", { class: "duelist" });
+        pending.forEach(function (p) {
+          list.appendChild(el("div", { class: "duerow", style: { cursor: "default" } }, [
+            el("span", { class: "avatar sm",
+              text: (p.row.label || "?").trim().charAt(0) }),
+            el("span", { class: "grow" }, [
+              el("span", { class: "duerow-name", text: p.row.label }),
+              el("span", { class: "tiny faint", text: catLabel(p.row.category)
+                + " · " + L("প্রতি মাসের ", "on the ")
+                + (bn() ? root.bnDigits(String(p.row.day_of_month)) : p.row.day_of_month)
+                + L(" তারিখ", "") }),
+            ]),
+            p.overdue ? el("span", { class: "chip chip-warn",
+              text: L("সময় হয়েছে", "due") }) : null,
+            el("span", { class: "duerow-amt", style: { color: "var(--text)" },
+              text: A.money(p.row.amount) }),
+            el("button", { class: "btn btn-sm btn-pri", text: L("বসান", "Post"),
+              onclick: function () {
+                e.runRecurring(p.row.id, { month: month });
+                A.toast(T("Saved"), "ok"); A.refresh();
+              } }),
+          ]));
+        });
+        box.appendChild(list);
+        body.appendChild(box);
+      }
+
+      const card = el("div", { class: "card", style: { marginTop: "var(--gap)" } });
+      card.appendChild(el("div", { class: "card-pad", style: { paddingBottom: "0" } },
+        [el("h3", { class: "sec", style: { marginBottom: "0" },
+          text: L("সব নিয়মিত খরচ", "All regular costs") })]));
+      if (!all.length) {
+        card.appendChild(el("div", { class: "empty" }, [
+          el("div", { class: "big", text: "🧾" }),
+          el("div", { text: L("ভাড়া, বেতন, বিদ্যুৎ — একবার বসিয়ে রাখুন",
+                              "Set rent, wages and bills once") }),
+        ]));
+      } else {
+        const list = el("div", { class: "duelist" });
+        all.forEach(function (r) {
+          const done = (r.last_done || "") === month;
+          list.appendChild(el("button", { class: "duerow",
+            onclick: function () { recurringDialog(r); } }, [
+            el("span", { class: "avatar sm", text: (r.label || "?").trim().charAt(0) }),
+            el("span", { class: "grow" }, [
+              el("span", { class: "duerow-name", text: r.label }),
+              el("span", { class: "tiny faint", text: catLabel(r.category) + " · "
+                + (r.kind === "personal" ? L("নিজের", "personal") : L("দোকানের", "shop")) }),
+            ]),
+            done ? el("span", { class: "chip chip-ok", text: L("দেওয়া হয়েছে", "posted") }) : null,
+            el("span", { class: "duerow-amt", style: { color: "var(--text)" },
+              text: A.money(r.amount) }),
+            el("span", { class: "duerow-go" }, [A.icon("right")]),
+          ]));
+        });
+        card.appendChild(list);
+      }
+      body.appendChild(card);
+    }
+
+    /* ---- who is owed what ---- */
+    function drawStaff() {
+      const list = e.staffMonthAll(month);
+      const wage = list.reduce(function (s, x) { return s + x.salary_due; }, 0);
+      const paid = list.reduce(function (s, x) { return s + x.paid; }, 0);
+      const left = list.reduce(function (s, x) { return s + x.left; }, 0);
+
+      body.appendChild(el("div", { class: "grid tiles3" }, [
+        el("div", { class: "tile tile-hero" }, [
+          el("div", { class: "k", text: L("এ মাসের মোট বেতন", "Wage bill") }),
+          el("div", { class: "v", text: A.money(wage) }),
+          el("div", { class: "s", text: (bn() ? root.bnDigits(String(list.length)) : list.length)
+            + L(" জন", " people") }),
+        ]),
+        el("div", { class: "tile" }, [
+          el("div", { class: "k", text: L("দেওয়া হয়েছে", "Paid") }),
+          el("div", { class: "v ok-t", text: A.money(paid) }),
+        ]),
+        el("div", { class: "tile" }, [
+          el("div", { class: "k", text: L("এখনো পাওনা", "Still owed") }),
+          el("div", { class: "v " + (left > 0 ? "warn-t" : "ok-t"), text: A.money(left) }),
+        ]),
+      ]));
+
+      body.appendChild(el("div", { class: "toolbar", style: { marginTop: "var(--gap)" } }, [
+        el("div", { class: "grow" }),
+        el("button", { class: "btn btn-sm", text: "⬇ " + T("Excel"), onclick: function () {
+          A.xlsx(L("কর্মচারী", "Staff"),
+            [[T("Name"), L("কাজ", "Role"), T("Phone"), L("মাসিক বেতন", "Salary"),
+              L("দেওয়া হয়েছে", "Paid"), L("আগাম", "Advance"), L("বাকি", "Left")]]
+            .concat(list.map(function (x) {
+              return [x.row.name, x.row.role, x.row.phone, x.salary_due,
+                      x.paid_salary, x.paid_advance, x.left]; })), "staff-" + month);
+        } }),
+        el("button", { class: "btn btn-sm btn-pri", text: "＋ " + L("কর্মচারী", "Staff"),
+          onclick: function () { staffDialog(null); } }),
+      ]));
+
+      if (!list.length) {
+        body.appendChild(el("div", { class: "card card-pad empty",
+          style: { marginTop: "var(--gap)" } }, [
+          el("div", { class: "big", text: "👥" }),
+          el("div", { text: L("কোনো কর্মচারী যোগ করা হয়নি", "No staff yet") }),
+        ]));
+        return;
+      }
+
+      const wrap = el("div", { class: "stack", style: { marginTop: "var(--gap)" } });
+      list.forEach(function (info) {
+        const pct = info.salary_due > 0
+          ? Math.min(info.paid / info.salary_due, 1) * 100 : (info.paid > 0 ? 100 : 0);
+        const led = e.staffLedger(info.row.id, 4).filter(function (x) {
+          return (x.for_month || String(x.spent_on).slice(0, 7)) === month;
+        });
+        wrap.appendChild(el("div", { class: "card duecard" }, [
+          el("div", { class: "duecard-head" }, [
+            el("div", { class: "avatar", text: (info.row.name || "?").trim().charAt(0) }),
+            el("div", { class: "grow" }, [
+              el("div", { class: "duecard-name", text: info.row.name }),
+              el("div", { class: "small muted",
+                text: [info.row.role, info.row.phone].filter(Boolean).join(" · ")
+                  || L("বেতন বসানো হয়নি", "no salary set") }),
+            ]),
+            el("div", { class: "right" }, [
+              el("div", { class: "tiny faint up", text: L("পাওনা", "Owed") }),
+              el("div", { class: "duecard-amt",
+                style: { color: info.left > 0 ? "var(--warn)" : "var(--ok)" },
+                text: A.money(info.left) }),
+            ]),
+          ]),
+          el("div", { class: "duecard-body" }, [
+            el("div", { class: "spread small muted" }, [
+              el("span", { text: L("মাসিক বেতন ", "Salary ") + A.money(info.salary_due) }),
+              el("span", { text: L("দেওয়া ", "paid ") + A.money(info.paid) }),
+            ]),
+            el("div", { class: "bar", style: { marginTop: "6px" } },
+              [el("i", { style: { width: pct + "%",
+                background: pct >= 100 ? "var(--ok)" : null } })]),
+            info.paid_advance ? el("div", { class: "tiny faint", style: { marginTop: "6px" },
+              text: L("এর মধ্যে আগাম ", "of which advance ")
+                + A.money(info.paid_advance) }) : null,
+            el("div", { class: "row", style: { marginTop: "14px", gap: "8px" } }, [
+              el("button", { class: "btn btn-pri btn-sm", text: "＋ " + L("বেতন দিন", "Pay"),
+                onclick: function () { payDialog(info, month); } }),
+              el("button", { class: "btn btn-sm", text: "✎ " + L("তথ্য", "Details"),
+                onclick: function () { staffDialog(info.row); } }),
+              info.row.phone ? el("a", { class: "btn btn-sm",
+                href: "tel:" + String(info.row.phone).replace(/[^\d+]/g, ""),
+                text: "☎ " + L("কল", "Call") }) : null,
+            ]),
+            led.length ? el("div", { class: "stack", style: { gap: "4px",
+              marginTop: "12px" } }, led.map(function (x) {
+                return el("div", { class: "spread tiny faint" }, [
+                  el("span", { text: A.dateText(x.spent_on) + " · "
+                    + (x.pay_kind === "advance" ? L("আগাম", "advance") : L("বেতন", "salary"))
+                    + " · " + (x.method || "Cash") }),
+                  el("span", { text: A.money(x.amount) }),
+                ]);
+              })) : null,
+          ]),
+        ]));
+      });
+      body.appendChild(wrap);
+    }
+
+    draw();
   });
 })(window);
 </script>
