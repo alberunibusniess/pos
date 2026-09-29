@@ -2283,6 +2283,13 @@ window.SHOP = {
     "suppliers", "purchases", "purchase_items", "supplier_payments",
     "held_bills", "photos", "staff", "recurring"];
 
+  /* Bump this whenever a name is added to TABLES.  A browser only runs
+     onupgradeneeded when the version goes up, so a shop that installed
+     the app before a table existed would otherwise never get that store
+     — and then every write failed, not just the ones to the new table,
+     because a transaction naming a missing store throws outright. */
+  const DB_VERSION = 2;
+
   // ------------------------------------------------------------ shop list
   function readShops() {
     try {
@@ -2329,7 +2336,7 @@ window.SHOP = {
     return new Promise(function (resolve) {
       let req;
       try {
-        req = indexedDB.open(self.dbName, 1);
+        req = indexedDB.open(self.dbName, DB_VERSION);
       } catch (e) {
         // Private windows and locked-down browsers refuse IndexedDB.  The
         // app still has to open — it just cannot remember anything, and it
@@ -2345,6 +2352,10 @@ window.SHOP = {
         if (!db.objectStoreNames.contains("settings")) db.createObjectStore("settings");
       };
       req.onerror = function () { self._failed = true; resolve(self); };
+      req.onblocked = function () {
+        // another tab is holding the old version open
+        self._blocked = true;
+      };
       req.onsuccess = function (ev) {
         self.idb = ev.target.result;
         self._loadAll().then(function () { resolve(self); });
@@ -2404,26 +2415,42 @@ window.SHOP = {
     if (!this.idb || this._failed) return Promise.resolve();
     const queue = this._queue;
     this._queue = {};
-    const names = Object.keys(queue);
-    if (!names.length) return Promise.resolve();
     const self = this;
-    return new Promise(function (resolve) {
-      let tx;
-      try { tx = self.idb.transaction(names, "readwrite"); }
-      catch (e) { return resolve(); }
-      names.forEach(function (name) {
-        const store = tx.objectStore(name);
-        const rows = queue[name];
-        Object.keys(rows).forEach(function (key) {
-          try {
-            if (name === "settings") store.put(rows[key], "all");
-            else store.put(rows[key]);
-          } catch (e) { /* one bad row must not lose the rest */ }
+    // Only name stores this database actually has.  One unknown name in
+    // the list aborts the whole transaction, which once meant a single
+    // new table could silently stop every sale from being saved.
+    const names = Object.keys(queue).filter(function (n) {
+      return self.idb.objectStoreNames.contains(n);
+    });
+    if (!names.length) return Promise.resolve();
+
+    function writeBatch(list) {
+      return new Promise(function (resolve) {
+        let tx;
+        try { tx = self.idb.transaction(list, "readwrite"); }
+        catch (e) { return resolve(false); }
+        list.forEach(function (name) {
+          const store = tx.objectStore(name);
+          const rows = queue[name];
+          Object.keys(rows).forEach(function (key) {
+            try {
+              if (name === "settings") store.put(rows[key], "all");
+              else store.put(rows[key]);
+            } catch (e) { /* one bad row must not lose the rest */ }
+          });
         });
+        tx.oncomplete = function () { resolve(true); };
+        tx.onerror = function () { resolve(false); };
+        tx.onabort = function () { resolve(false); };
       });
-      tx.oncomplete = function () { resolve(); };
-      tx.onerror = function () { resolve(); };
-      tx.onabort = function () { resolve(); };
+    }
+
+    return writeBatch(names).then(function (ok) {
+      if (ok) return true;
+      // the batch failed as a whole — try each table on its own so one
+      // bad store cannot take the others down with it
+      return Promise.all(names.map(function (n) { return writeBatch([n]); }))
+        .then(function () { return true; });
     });
   };
 
@@ -2451,18 +2478,24 @@ window.SHOP = {
 
   Store.prototype.importAll = function (data) {
     if (!data || data.format !== "pos-backup") throw new Error("not a backup file");
+    if (this._failed || !this.idb) {
+      return Promise.reject(new Error("this browser is not storing anything"));
+    }
     const self = this;
+    let rowCount = 0;
     TABLES.forEach(function (t) {
+      // A backup written by an older version simply has no row for a
+      // table added since; an empty list is the right answer, not a fault.
       const rows = (data.tables && data.tables[t]) || [];
       self.tables[t] = rows;
       let max = 0;
       rows.forEach(function (r) { if (r.id > max) max = r.id; });
       self.seq[t] = max;
-      rows.forEach(function (r) { self.put(t, r); });
+      rows.forEach(function (r) { self.put(t, r); rowCount += 1; });
     });
     self.tables.settings = (data.tables && data.tables.settings) || {};
     self.put("settings", self.tables.settings);
-    return self.flush();
+    return self.flush().then(function () { return rowCount; });
   };
 
   Store.prototype.wipe = function () {
@@ -6896,6 +6929,7 @@ window.SHOP = {
       const mb = function (n) { return (n / 1048576).toFixed(1) + " MB"; };
       quota.textContent = T("Storage used") + ": " + mb(q.used) + " / " + mb(q.total);
     });
+    const folder = e.setting("backup_folder", "");
     page.appendChild(group("Backup", [
       el("div", { class: "small muted", text: root.isBn()
         ? "ব্রাউজারের ভিতরের হিসাব ক্যাশ ক্লিয়ার করলে বা ব্রাউজার বদলালে মুছে যেতে পারে। সপ্তাহে একবার ব্যাকআপ নামিয়ে নিজের WhatsApp-এ পাঠিয়ে রাখুন।"
@@ -6906,9 +6940,36 @@ window.SHOP = {
       el("div", { class: "row" }, [
         el("button", { class: "btn btn-pri grow", text: "⬇ " + T("Save backup"),
           onclick: A.saveBackup }),
+        el("button", { class: "btn btn-ok grow",
+          text: "⇧ " + (root.isBn() ? "ব্যাকআপ পাঠান" : "Send backup"),
+          onclick: A.shareBackup }),
         el("button", { class: "btn grow", text: "⬆ " + T("Restore backup"),
           onclick: A.restoreBackup }),
       ]),
+      el("div", { class: "tiny faint", text: root.isBn()
+        ? "\u201cপাঠান\u201d চাপলে ফোনের শেয়ার তালিকা আসবে — Google Drive, WhatsApp, Gmail, যেটা সুবিধা।"
+        : "\u201cSend\u201d opens the phone's share sheet — Drive, WhatsApp, Gmail." }),
+      /* On a computer a folder can be chosen once and written to every
+         time.  Put that folder inside Google Drive or OneDrive and the
+         backup reaches the cloud without anyone signing into anything. */
+      A.backupFolderSupported() ? el("div", { class: "field",
+        style: { marginTop: "14px" } }, [
+        el("label", { text: root.isBn() ? "ব্যাকআপ রাখার ফোল্ডার" : "Backup folder" }),
+        folder
+          ? el("div", { class: "row" }, [
+              el("span", { class: "chip chip-ok", text: "📁 " + folder }),
+              el("button", { class: "btn btn-sm", text: root.isBn() ? "বদলান" : "Change",
+                onclick: function () { A.pickBackupFolder(); } }),
+              el("button", { class: "btn btn-sm", text: root.isBn() ? "সরান" : "Remove",
+                onclick: function () { A.forgetBackupFolder(); } }),
+            ])
+          : el("button", { class: "btn", text: "📁 " + (root.isBn()
+              ? "ফোল্ডার বেছে দিন" : "Choose a folder"),
+              onclick: function () { A.pickBackupFolder(); } }),
+        el("div", { class: "tiny faint", text: root.isBn()
+          ? "Google Drive বা OneDrive-এর ভিতরের একটা ফোল্ডার বাছলে ব্যাকআপ নিজে থেকেই ক্লাউডে চলে যাবে।"
+          : "Pick a folder inside Google Drive or OneDrive and every backup syncs by itself." }),
+      ]) : null,
       quota,
     ]));
 
@@ -7629,13 +7690,144 @@ window.SHOP = {
   };
 
   // ------------------------------------------------------------ backup
-  A.saveBackup = function () {
+  /* ------------------------------------------------------------ backup
+     A backup that stays in the Downloads folder of the phone that broke
+     is no backup at all.  Three ways out, in the order a shopkeeper can
+     actually manage them:
+       share   — the phone's own sheet: Drive, WhatsApp, Gmail, one tap
+       folder  — a folder chosen once; if it sits inside Google Drive or
+                 OneDrive on a PC, every backup syncs by itself
+       download— the plain file, always available as a fallback
+  */
+  function backupBlob() {
     const dump = A.store.exportAll();
     dump.shop_name = A.shopName();
-    const blob = new Blob([JSON.stringify(dump)], { type: "application/json" });
-    A.download(blob, "pos-backup-" + root.POSEngine.helpers.dayKey() + ".json");
+    return new Blob([JSON.stringify(dump)], { type: "application/json" });
+  }
+  function backupName() {
+    const shop = String(A.shopName() || "pos").replace(/[\\/:*?"<>|]/g, "").slice(0, 30);
+    return shop + " - backup " + root.POSEngine.helpers.dayKey() + ".json";
+  }
+  function markSaved() {
     A.eng.setSetting("last_backup", root.POSEngine.helpers.stamp());
-    A.toast(root.isBn() ? "ব্যাকআপ ফাইল নেমে গেছে" : "Backup file downloaded", "ok");
+  }
+
+  /* --- the folder a PC can keep writing into ----------------------- */
+  const HANDLE_DB = "pos_backup_folder";
+  function handleStore(mode) {
+    return new Promise(function (resolve, reject) {
+      let req;
+      try { req = indexedDB.open(HANDLE_DB, 1); }
+      catch (e) { return reject(e); }
+      req.onupgradeneeded = function (ev) {
+        ev.target.result.createObjectStore("handles");
+      };
+      req.onerror = function () { reject(req.error); };
+      req.onsuccess = function (ev) {
+        const db = ev.target.result;
+        resolve(db.transaction("handles", mode).objectStore("handles"));
+      };
+    });
+  }
+  function readHandle() {
+    return handleStore("readonly").then(function (st) {
+      return new Promise(function (resolve) {
+        const r = st.get(A.store.shopId);
+        r.onsuccess = function () { resolve(r.result || null); };
+        r.onerror = function () { resolve(null); };
+      });
+    }).catch(function () { return null; });
+  }
+  function writeHandle(h) {
+    return handleStore("readwrite").then(function (st) {
+      st.put(h, A.store.shopId);
+    }).catch(function () {});
+  }
+
+  A.backupFolderSupported = function () {
+    return typeof root.showDirectoryPicker === "function";
+  };
+
+  A.pickBackupFolder = function () {
+    if (!A.backupFolderSupported()) {
+      A.toast(root.isBn() ? "এই ব্রাউজারে ফোল্ডার বাছা যায় না — কম্পিউটারের Chrome লাগবে"
+                          : "This browser cannot pick a folder", "warn");
+      return Promise.resolve(null);
+    }
+    return root.showDirectoryPicker({ mode: "readwrite", id: "pos-backup" })
+      .then(function (h) {
+        return writeHandle(h).then(function () {
+          A.eng.setSetting("backup_folder", h.name || "");
+          A.toast((root.isBn() ? "ফোল্ডার বাছা হয়েছে: " : "Folder set: ") + h.name, "ok");
+          A.refresh();
+          return h;
+        });
+      })
+      .catch(function () { return null; });   // the picker was dismissed
+  };
+
+  A.forgetBackupFolder = function () {
+    return writeHandle(null).then(function () {
+      A.eng.setSetting("backup_folder", "");
+      A.toast(root.isBn() ? "ফোল্ডার ভুলে গেছি" : "Folder forgotten", "ok");
+      A.refresh();
+    });
+  };
+
+  /** Write into the chosen folder if we still have permission for it. */
+  function writeToFolder(blob, name) {
+    return readHandle().then(function (h) {
+      if (!h || !h.getFileHandle) return false;
+      const ask = h.queryPermission
+        ? h.queryPermission({ mode: "readwrite" })
+        : Promise.resolve("granted");
+      return Promise.resolve(ask).then(function (state) {
+        if (state === "granted") return true;
+        if (!h.requestPermission) return false;
+        return h.requestPermission({ mode: "readwrite" })
+          .then(function (s) { return s === "granted"; });
+      }).then(function (ok) {
+        if (!ok) return false;
+        return h.getFileHandle(name, { create: true })
+          .then(function (fh) { return fh.createWritable(); })
+          .then(function (w) { return w.write(blob).then(function () { return w.close(); }); })
+          .then(function () { return h.name || true; });
+      });
+    }).catch(function () { return false; });
+  }
+
+  A.saveBackup = function () {
+    const blob = backupBlob(), name = backupName();
+    writeToFolder(blob, name).then(function (where) {
+      A.download(blob, name);
+      markSaved();
+      A.toast(where
+        ? (root.isBn() ? "ব্যাকআপ নেমেছে, আর " + where + " ফোল্ডারেও রাখা হয়েছে"
+                       : "Backup downloaded and written to " + where)
+        : (root.isBn() ? "ব্যাকআপ ফাইল নেমে গেছে" : "Backup file downloaded"), "ok");
+      A.refresh();
+    });
+  };
+
+  /** The phone's own share sheet — Drive, WhatsApp, Gmail, whatever the
+   *  shopkeeper already uses.  No account to set up on our side. */
+  A.shareBackup = function () {
+    const blob = backupBlob(), name = backupName();
+    const file = (typeof File === "function")
+      ? new File([blob], name, { type: "application/json" }) : null;
+    if (file && root.navigator.canShare && root.navigator.canShare({ files: [file] })) {
+      root.navigator.share({ files: [file],
+        title: A.shopName(),
+        text: (root.isBn() ? "হিসাবের ব্যাকআপ · " : "Accounts backup · ") + A.shopName(),
+      }).then(function () {
+        markSaved(); A.refresh();
+      }).catch(function () {});
+      return;
+    }
+    A.toast(root.isBn()
+      ? "এই ব্রাউজারে সরাসরি শেয়ার হয় না — ফাইলটা নামিয়ে নিজে পাঠান"
+      : "Sharing is not available here — download the file and send it", "warn");
+    A.saveBackup();
   };
 
   A.restoreBackup = function () {
@@ -7656,14 +7848,18 @@ window.SHOP = {
             : "Everything now will be replaced by the backup.", { danger: true })
           .then(function (yes) {
             if (!yes) return;
+            const failed = function (err) {
+              A.toast((root.isBn() ? "ফেরানো গেল না: " : "Restore failed: ")
+                + (err && err.message ? err.message : ""), "bad");
+            };
             try {
-              A.store.importAll(data).then(function () {
-                A.toast(root.isBn() ? "ফেরানো হয়েছে" : "Restored", "ok");
-                setTimeout(function () { location.reload(); }, 700);
-              });
-            } catch (e) {
-              A.toast((root.isBn() ? "ফেরানো গেল না: " : "Restore failed: ") + e.message, "bad");
-            }
+              A.store.importAll(data).then(function (rows) {
+                A.toast((root.isBn() ? "ফেরানো হয়েছে · " : "Restored · ")
+                  + (root.isBn() ? root.bnDigits(String(rows)) : rows)
+                  + (root.isBn() ? " টি লাইন" : " rows"), "ok");
+                setTimeout(function () { location.reload(); }, 900);
+              }).catch(failed);
+            } catch (e) { failed(e); }
           });
       };
       reader.readAsText(f);
