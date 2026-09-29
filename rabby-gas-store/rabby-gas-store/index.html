@@ -289,6 +289,9 @@ table.tbl tbody tr:hover{background:var(--surface2)}
   .modal > footer .btn{min-width:0}
 }
 @media (min-width:901px){ .only-phone{display:none !important} }
+/* the customers table repeats the phone under the name for the
+   card layout; on a wide screen its own column shows it */
+@media (min-width:641px){ table.tbl.cust-tbl td.c-name .tiny{display:none} }
 
 @media print{
   body{background:#fff}
@@ -670,6 +673,166 @@ table.tbl td .btn + .btn{margin-inline-start:6px}
   .adjrow > :first-child{grid-column:1 / -1}
 }
 
+
+/* ------------------------------------------------------- toolbars
+   A search box next to a row of buttons.  The box used to be allowed
+   to shrink to nothing on a phone, which is how a button ended up
+   sitting on top of it: give it a floor, and let the buttons wrap
+   underneath instead of fighting for the same line. */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar > .field{flex:1 1 200px;min-width:160px}
+.toolbar > .btn{flex:0 0 auto}
+@media (max-width:640px){
+  .toolbar > .field{flex:1 1 100%;min-width:0}
+  .toolbar > .btn{flex:1 1 auto;justify-content:center}
+}
+
+/* ---------------------------------------------------- reports head */
+.repbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.repbar > .seg{flex:0 1 auto;min-width:0}
+.repbar .stepper{
+  display:flex;align-items:center;gap:6px;flex:1 1 190px;min-width:0;
+  justify-content:center;
+}
+.repbar .stepper .lbl{
+  flex:1;min-width:0;text-align:center;font-size:1rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.repbar > .btn{flex:0 0 auto}
+@media (max-width:760px){
+  .repbar{flex-direction:column;align-items:stretch}
+  .repbar > .seg{width:100%}
+  .repbar > .seg button{flex:1;padding:0 8px}
+  .repbar .stepper{width:100%}
+  .repbar > .btn{width:100%;justify-content:center}
+}
+
+.datepick{
+  margin-top:var(--gap);padding:var(--pad);
+  background:var(--surface);border:1px solid var(--hair);
+  border-radius:var(--r);box-shadow:var(--shadow);
+}
+.datepick .field{flex:1 1 150px;min-width:0}
+.datepick .btn{flex:1 1 auto;justify-content:center}
+
+
+/* On a phone the photo and the cost price are the first things a
+   shopkeeper can do without — dropping them keeps the name, the stock
+   and the selling price on one screen instead of three wrapped lines. */
+@media (max-width:640px){
+  table.tbl .col-photo,table.tbl .col-cost{display:none}
+  table.tbl th,table.tbl td{padding:10px 8px}
+  table.tbl th.pad,table.tbl td.pad{padding-inline-end:10px}
+}
+
+
+/* A table with four columns and three buttons does not fit a phone.
+   Below 640 the rows become little cards instead: name and price on
+   the top line, stock and the buttons underneath. */
+@media (max-width:640px){
+  table.tbl-cards thead{display:none}
+  table.tbl-cards,table.tbl-cards tbody,table.tbl-cards tr,
+  table.tbl-cards td{display:block;width:auto}
+  table.tbl-cards tr{
+    display:grid;grid-template-columns:1fr auto;gap:8px 10px;align-items:center;
+    padding:12px 14px;border-bottom:1px solid var(--hair);
+  }
+  table.tbl-cards tr:last-child{border-bottom:0}
+  table.tbl-cards tr:hover{background:transparent}
+  table.tbl-cards td{padding:0;border:0}
+  table.tbl-cards td.c-name{grid-column:1;grid-row:1;min-width:0}
+  table.tbl-cards td.c-price{grid-column:2;grid-row:1;text-align:right;font-size:1.05rem}
+  table.tbl-cards td.c-stock{grid-column:1;grid-row:2}
+  table.tbl-cards td.c-act{grid-column:2;grid-row:2;text-align:right;white-space:nowrap}
+  table.tbl-cards td.c-act .btn{min-height:38px;width:38px;padding:0}
+  table.tbl-cards td.c-act .btn + .btn{margin-inline-start:6px}
+  /* the phone number already sits under the name on a card */
+  table.tbl-cards td.c-hide-phone{display:none}
+}
+
+
+/* ------------------------------------------------------- checkbox row */
+.checkrow{
+  display:flex;align-items:center;gap:10px;min-height:var(--tap);
+  padding:0 2px;cursor:pointer;color:var(--muted);font-size:.9rem;font-weight:600;
+}
+.checkrow input{
+  width:22px;height:22px;flex:0 0 22px;accent-color:var(--pri);margin:0;cursor:pointer;
+}
+.checkrow:hover{color:var(--text)}
+
+
+/* ---------------------------------------------- A4 memo, on screen */
+.modal.wide{width:min(900px,100%)}
+.invpaper{
+  background:#fff;color:#101a17;border-radius:8px;padding:26px 28px;
+  box-shadow:inset 0 0 0 1px #e6ecea;
+  --ink:var(--pri-d);--stamp:var(--pri-d);
+}
+html[data-theme="dark"] .invpaper{--ink:#0b5f58}
+.invpaper .inv-top{display:flex;gap:16px;align-items:flex-start;justify-content:space-between}
+.invpaper .inv-brand{display:flex;gap:12px;align-items:flex-start;min-width:0}
+.invpaper .inv-mark{width:46px;height:46px;flex:0 0 46px;border-radius:12px;display:grid;
+  place-items:center;color:#fff;font-weight:800;font-size:1.35rem;background:var(--ink)}
+.invpaper .inv-shop{font-size:1.3rem;font-weight:800;line-height:1.2}
+.invpaper .inv-meta{font-size:.78rem;color:#5d6b67;line-height:1.45}
+.invpaper .inv-stamp{border:2px solid var(--stamp);border-radius:8px;padding:6px 16px;
+  text-align:center;flex:0 0 auto}
+.invpaper .inv-stamp.ok{--stamp:#12795f}
+.invpaper .inv-stamp.warn{--stamp:#b06a00}
+.invpaper .inv-stamp.bad{--stamp:#b3261e}
+.invpaper .inv-stamp-t{color:var(--stamp);font-weight:800;font-size:1.02rem}
+.invpaper .inv-stamp-s{color:var(--stamp);font-size:.7rem;margin-top:2px}
+.invpaper .inv-rule{height:3px;background:var(--ink);margin-top:12px;border-radius:2px}
+.invpaper .inv-title{text-align:center;color:var(--ink);font-size:1.1rem;
+  margin:16px 0 18px;font-weight:800}
+.invpaper .inv-parties{display:flex;gap:20px;justify-content:space-between;margin-bottom:18px}
+.invpaper .inv-lbl{font-size:.72rem;font-weight:800;color:var(--ink);
+  margin-bottom:4px}
+.invpaper .inv-cust,.invpaper .inv-no{font-size:1rem;font-weight:800}
+.invpaper .inv-tbl{width:100%;border-collapse:collapse}
+.invpaper .inv-tbl th{font-size:.72rem;font-weight:700;color:#5d6b67;text-align:left;
+  padding:8px 10px;border-bottom:1.5px solid #cfd9d6;background:transparent}
+.invpaper .inv-tbl th.right,.invpaper .inv-tbl td.right{text-align:right}
+.invpaper .inv-tbl td{padding:9px 10px;border-bottom:1px solid #e6ecea;vertical-align:top}
+.invpaper .inv-tbl .sl{width:34px;color:#5d6b67}
+.invpaper .inv-item{font-weight:700}
+.invpaper .strong{font-weight:800}
+.invpaper .inv-foot{display:flex;gap:24px;justify-content:space-between;margin-top:14px}
+.invpaper .inv-words{flex:1;min-width:0;padding-top:6px}
+.invpaper .inv-sum{flex:0 0 58%;max-width:300px}
+.invpaper .inv-sum-r{display:flex;justify-content:space-between;gap:16px;padding:5px 0;
+  font-size:.92rem}
+.invpaper .inv-sum-r .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.invpaper .inv-sum-r.total{border-top:1.5px solid #cfd9d6;margin-top:6px;padding-top:9px;
+  font-size:1.2rem;font-weight:800;color:var(--ink)}
+.invpaper .inv-sum-r.pay{color:#5d6b67;font-size:.85rem}
+.invpaper .inv-sum-r.due{border-top:1px solid #e6ecea;margin-top:4px;padding-top:8px;
+  font-weight:800;color:#b3261e}
+.invpaper .inv-sign{display:flex;gap:40px;justify-content:space-between;margin-top:46px}
+.invpaper .inv-sign-b{flex:0 0 42%}
+.invpaper .inv-line{border-top:1px solid #9aa7a3;margin-bottom:5px}
+.invpaper .inv-note{margin-top:28px;padding-top:10px;border-top:1px solid #e6ecea;
+  text-align:center;font-size:.85rem}
+@media (max-width:700px){
+  .invpaper{padding:16px 14px;font-size:.88rem}
+  .invpaper .inv-parties,.invpaper .inv-foot,.invpaper .inv-sign{
+    flex-direction:column;gap:12px}
+  .invpaper .inv-sum{flex:1 1 auto;max-width:none}
+  .invpaper .inv-sign-b{flex:1 1 auto}
+  .invpaper .right{text-align:left}
+  .invpaper .inv-tbl th,.invpaper .inv-tbl td{padding:7px 6px}
+}
+
+
+/* ---------------------------------------------------------- expenses */
+.note-soft{
+  border-color:color-mix(in srgb,var(--warn) 34%,var(--hair));
+  background:linear-gradient(180deg,color-mix(in srgb,var(--warn) 9%,var(--surface)),
+    var(--surface));
+}
+tr.tap{cursor:pointer}
+
 </style>
 </head>
 <body>
@@ -723,14 +886,14 @@ table.tbl td .btn + .btn{margin-inline-start:6px}
    The name is not editable inside the app: that is the whole licence.
    ===================================================================== */
 window.SHOP = {
-  name: "রাব্বি গ্যাস স্টোর",
-  name_en: "Rabby Gas Store",
-  phone: "01979111660",
-  address: "Bazar road, Savar, Dhaka",
+  name: "নমুনা দোকান",
+  name_en: "Sample Store",
+  phone: "",
+  address: "",
   tagline: "",
-  issued_to: "Rabby 01979111660",
-  issued_on: "2026-09-24",
-  locked: true,
+  issued_to: "",          // who this copy was made for
+  issued_on: "",          // yyyy-mm-dd
+  locked: false,          // true in a generated copy: name cannot be edited
   build: "1.0.0",
 };
 </script>
@@ -1176,34 +1339,10 @@ window.SHOP = {
   };
 
   // ------------------------------------------------------------------ expenses
+  /** Kept for the older call sites: a plain shop expense. */
   Engine.prototype.addExpense = function (category, amount, note, spent_on, user_id, method) {
-    const row = {
-      id: this.db.nextId("expenses"), category: category || "General",
-      amount: r2(amount), method: method || "Cash", note: note || "",
-      spent_on: spent_on || dayKey(), user_id: user_id || null,
-      created_at: stamp(),
-    };
-    this._t("expenses").push(row);
-    this.db.put("expenses", row);
-    return row;
-  };
-
-  Engine.prototype.expensesBetween = function (start, end) {
-    return this._t("expenses").filter((e) => inRange(dayOf(e), start, end))
-      .sort((a, b) => b.id - a.id);
-  };
-
-  Engine.prototype.expenseTotal = function (start, end) {
-    return r2(this.expensesBetween(start, end).reduce((s, e) => s + num(e.amount), 0));
-  };
-
-  Engine.prototype.expenseByCategory = function (start, end) {
-    const by = {};
-    this.expensesBetween(start, end).forEach((e) => {
-      by[e.category] = r2((by[e.category] || 0) + num(e.amount));
-    });
-    return Object.keys(by).map((k) => ({ category: k, total: by[k] }))
-      .sort((a, b) => b.total - a.total);
+    return this.saveExpense({ category: category, amount: amount, note: note,
+      spent_on: spent_on, user_id: user_id, method: method, kind: "shop" });
   };
 
   // -------------------------------------------------------------------- profit
@@ -1224,11 +1363,16 @@ window.SHOP = {
       });
     });
     revenue = r2(revenue); tax = r2(tax); cogs = r2(cogs);
-    const expenses = this.expenseTotal(start, end);
+    // Only the cost of running the shop comes off the profit.  What the
+    // owner took home is the profit being spent, not a cost of earning it.
+    const expenses = this.expenseTotal(start, end, "shop");
+    const personal = this.expenseTotal(start, end, "personal");
     const gross = r2(revenue - tax - cogs);
+    const net = r2(gross - expenses);
     return {
       revenue: revenue, tax: tax, cogs: cogs, gross: gross,
-      discount: r2(discount), expenses: expenses, net: r2(gross - expenses),
+      discount: r2(discount), expenses: expenses, net: net,
+      personal: personal, left_after_personal: r2(net - personal),
       lines_without_cost: untracked,
     };
   };
@@ -1250,8 +1394,11 @@ window.SHOP = {
       }
     });
     // An expense paid from the bKash app never touched the drawer.
+    // Dated by when the money left, not when it was typed in — and the
+    // owner's own draw empties the drawer exactly like a shop cost does.
+    const expenseDay = (e) => String(e.spent_on || e.created_at || "").slice(0, 10);
     const cash_expenses = r2(this._t("expenses")
-      .filter((e) => dayOf(e) === day && (e.method || "Cash") === "Cash")
+      .filter((e) => expenseDay(e) === day && (e.method || "Cash") === "Cash")
       .reduce((s, e) => s + num(e.amount), 0));
     const due_collected = r2(this._t("due_payments")
       .filter((d) => dayOf(d) === day && (d.method || "Cash") === "Cash")
@@ -1485,8 +1632,12 @@ window.SHOP = {
   "use strict";
   const E = root.POSEngine;
   const h = E.helpers, r2 = h.r2, num = h.num, dayKey = h.dayKey, stamp = h.stamp;
+  const pad = h.pad;
   const dayOf = (row) => String(row.created_at || row.spent_on || row.paid_on
                                || row.bought_on || "").slice(0, 10);
+  /** An expense belongs to the day the money went out, not the day it was
+   *  typed in — yesterday's rent entered this morning is yesterday's. */
+  const spendDay = (row) => String(row.spent_on || row.created_at || "").slice(0, 10);
   const inRange = (d, s, e) => d >= s && d <= e;
 
   // ---------------------------------------------------------- suppliers
@@ -1715,6 +1866,254 @@ window.SHOP = {
   };
 
 
+
+  // ==================================================================
+  //  খরচ — what the shop spends, and what the owner takes out
+  //
+  //  These are not the same thing and the difference decides whether a
+  //  shopkeeper believes the profit figure.  Rent, wages and electricity
+  //  are the cost of running the shop: they come off the profit.  Money
+  //  the owner takes home is the profit being spent — it leaves the
+  //  drawer but it is not a cost, and counting it as one makes a shop
+  //  that is doing fine look like it is losing.
+  //
+  //  So every expense carries a kind:
+  //    shop     — off the profit, out of the drawer
+  //    personal — out of the drawer only
+  // ==================================================================
+
+  const EXPENSE_KINDS = ["shop", "personal"];
+
+  E.prototype.saveExpense = function (data) {
+    data = data || {};
+    const kind = EXPENSE_KINDS.indexOf(data.kind) >= 0 ? data.kind : "shop";
+    if (data.id) {
+      const row = this._t("expenses").find(function (x) { return x.id === data.id; });
+      if (!row) return null;
+      ["category", "note", "method", "spent_on", "staff_id", "for_month",
+       "pay_kind"].forEach(function (f) {
+        if (data[f] !== undefined) row[f] = data[f];
+      });
+      if (data.amount !== undefined) row.amount = r2(data.amount);
+      if (data.kind !== undefined) row.kind = kind;
+      this.db.put("expenses", row);
+      return row;
+    }
+    const row = {
+      id: this.db.nextId("expenses"),
+      category: data.category || "Other",
+      amount: r2(data.amount), method: data.method || "Cash",
+      note: data.note || "", spent_on: data.spent_on || dayKey(),
+      kind: kind,
+      staff_id: data.staff_id || null,
+      for_month: data.for_month || null,
+      pay_kind: data.pay_kind || null,
+      user_id: data.user_id || null, created_at: stamp(),
+    };
+    this._t("expenses").push(row);
+    this.db.put("expenses", row);
+    return row;
+  };
+
+  E.prototype.deleteExpense = function (id) {
+    const t = this._t("expenses");
+    const i = t.findIndex(function (x) { return x.id === id; });
+    if (i < 0) return false;
+    t.splice(i, 1);
+    this.db.remove("expenses", id);
+    return true;
+  };
+
+  /** kind: "shop", "personal", or nothing for both. */
+  E.prototype.expensesBetween = function (start, end, kind) {
+    return this._t("expenses").filter(function (e) {
+      if (!inRange(spendDay(e), start, end)) return false;
+      if (!kind) return true;
+      return (e.kind || "shop") === kind;
+    }).sort(function (a, b) { return b.id - a.id; });
+  };
+
+  E.prototype.expenseTotal = function (start, end, kind) {
+    return r2(this.expensesBetween(start, end, kind)
+      .reduce(function (s, e) { return s + num(e.amount); }, 0));
+  };
+
+  E.prototype.expenseByCategory = function (start, end, kind) {
+    const by = {};
+    this.expensesBetween(start, end, kind).forEach(function (e) {
+      by[e.category] = r2((by[e.category] || 0) + num(e.amount));
+    });
+    return Object.keys(by).map(function (k) { return { category: k, total: by[k] }; })
+      .sort(function (a, b) { return b.total - a.total; });
+  };
+
+  // ------------------------------------------------------------ staff
+  E.prototype.saveStaff = function (data) {
+    data = data || {};
+    if (data.id) {
+      const row = this.staffMember(data.id);
+      if (!row) return null;
+      ["name", "phone", "role", "joined_on"].forEach(function (f) {
+        if (data[f] !== undefined) row[f] = data[f];
+      });
+      if (data.salary !== undefined) row.salary = r2(data.salary);
+      if (data.is_active !== undefined) row.is_active = data.is_active ? 1 : 0;
+      this.db.put("staff", row);
+      return row;
+    }
+    const row = {
+      id: this.db.nextId("staff"), name: data.name || "", phone: data.phone || "",
+      role: data.role || "", salary: r2(data.salary),
+      joined_on: data.joined_on || dayKey(), is_active: 1,
+    };
+    this._t("staff").push(row);
+    this.db.put("staff", row);
+    return row;
+  };
+
+  E.prototype.staffList = function (includeGone) {
+    return this._t("staff").filter(function (s) { return includeGone || s.is_active; })
+      .slice().sort(function (a, b) { return (a.name || "").localeCompare(b.name || ""); });
+  };
+
+  E.prototype.staffMember = function (id) {
+    return this._t("staff").find(function (s) { return s.id === id; }) || null;
+  };
+
+  /** Wages and advances are both money out of the shop, so they are
+   *  expenses like any other — they just carry the name attached. */
+  E.prototype.payStaff = function (data) {
+    data = data || {};
+    const who = this.staffMember(data.staff_id);
+    if (!who || r2(data.amount) <= 0) return null;
+    const advance = data.pay_kind === "advance";
+    return this.saveExpense({
+      category: advance ? "Staff advance" : "Salary",
+      amount: data.amount, method: data.method || "Cash",
+      note: data.note || "", spent_on: data.paid_on || dayKey(),
+      kind: "shop", staff_id: who.id,
+      for_month: data.for_month || dayKey().slice(0, 7),
+      pay_kind: advance ? "advance" : "salary",
+      user_id: data.user_id || null,
+    });
+  };
+
+  E.prototype.staffLedger = function (staff_id, limit) {
+    const rows = this._t("expenses").filter(function (e) { return e.staff_id === staff_id; })
+      .sort(function (a, b) { return String(b.spent_on).localeCompare(String(a.spent_on))
+        || b.id - a.id; });
+    return limit ? rows.slice(0, limit) : rows;
+  };
+
+  /** What one person has been paid for a month, and what is left. */
+  E.prototype.staffMonth = function (staff_id, month) {
+    month = month || dayKey().slice(0, 7);
+    const who = this.staffMember(staff_id);
+    if (!who) return null;
+    let salary = 0, advance = 0;
+    this._t("expenses").forEach(function (e) {
+      if (e.staff_id !== staff_id) return;
+      if ((e.for_month || String(e.spent_on).slice(0, 7)) !== month) return;
+      if (e.pay_kind === "advance") advance += num(e.amount);
+      else salary += num(e.amount);
+    });
+    const paid = r2(salary + advance);
+    return {
+      row: who, month: month, salary_due: r2(num(who.salary)),
+      paid_salary: r2(salary), paid_advance: r2(advance), paid: paid,
+      left: r2(Math.max(num(who.salary) - paid, 0)),
+    };
+  };
+
+  E.prototype.staffMonthAll = function (month) {
+    const self = this;
+    return this.staffList().map(function (s) { return self.staffMonth(s.id, month); });
+  };
+
+  // -------------------------------------------------- recurring costs
+  /** Rent and wages do not change from month to month, so they are set
+   *  once and posted with one tap when the month comes round. */
+  E.prototype.saveRecurring = function (data) {
+    data = data || {};
+    if (data.id) {
+      const row = this._t("recurring").find(function (x) { return x.id === data.id; });
+      if (!row) return null;
+      ["label", "category", "kind", "method", "staff_id"].forEach(function (f) {
+        if (data[f] !== undefined) row[f] = data[f];
+      });
+      if (data.amount !== undefined) row.amount = r2(data.amount);
+      if (data.day_of_month !== undefined) {
+        row.day_of_month = Math.min(Math.max(parseInt(data.day_of_month, 10) || 1, 1), 28);
+      }
+      if (data.is_active !== undefined) row.is_active = data.is_active ? 1 : 0;
+      this.db.put("recurring", row);
+      return row;
+    }
+    const row = {
+      id: this.db.nextId("recurring"),
+      label: data.label || "", category: data.category || "Other",
+      amount: r2(data.amount), kind: data.kind === "personal" ? "personal" : "shop",
+      method: data.method || "Cash",
+      day_of_month: Math.min(Math.max(parseInt(data.day_of_month, 10) || 1, 1), 28),
+      staff_id: data.staff_id || null, is_active: 1, last_done: "",
+    };
+    this._t("recurring").push(row);
+    this.db.put("recurring", row);
+    return row;
+  };
+
+  E.prototype.recurringList = function () {
+    return this._t("recurring").filter(function (r) { return r.is_active; })
+      .slice().sort(function (a, b) { return a.day_of_month - b.day_of_month; });
+  };
+
+  E.prototype.deleteRecurring = function (id) {
+    const t = this._t("recurring");
+    const i = t.findIndex(function (x) { return x.id === id; });
+    if (i < 0) return false;
+    t.splice(i, 1);
+    this.db.remove("recurring", id);
+    return true;
+  };
+
+  /** Everything not yet posted for this month, with the ones whose day
+   *  has already passed marked so the screen can shout about them. */
+  E.prototype.recurringPending = function (month) {
+    month = month || dayKey().slice(0, 7);
+    const today = dayKey();
+    const dayNow = parseInt(today.slice(8, 10), 10);
+    const thisMonth = today.slice(0, 7);
+    return this.recurringList().filter(function (r) {
+      return (r.last_done || "") !== month;
+    }).map(function (r) {
+      const overdue = month < thisMonth
+        || (month === thisMonth && dayNow >= r.day_of_month);
+      return { row: r, month: month, overdue: overdue };
+    });
+  };
+
+  E.prototype.runRecurring = function (id, opts) {
+    opts = opts || {};
+    const r = this._t("recurring").find(function (x) { return x.id === id; });
+    if (!r) return null;
+    const month = opts.month || dayKey().slice(0, 7);
+    if ((r.last_done || "") === month) return null;       // never twice
+    const day = month + "-" + pad(Math.min(r.day_of_month, 28), 2);
+    const today = dayKey();
+    const spent_on = day > today ? today : day;
+    const row = this.saveExpense({
+      category: r.category, amount: opts.amount !== undefined ? opts.amount : r.amount,
+      method: opts.method || r.method, note: r.label,
+      spent_on: spent_on, kind: r.kind, staff_id: r.staff_id || null,
+      for_month: month,
+      pay_kind: r.staff_id ? "salary" : null,
+      user_id: opts.user_id || null,
+    });
+    r.last_done = month;
+    this.db.put("recurring", r);
+    return row;
+  };
+
   // ==================================================================
   //  বাকি — the credit book
   //
@@ -1882,7 +2281,14 @@ window.SHOP = {
   const TABLES = ["products", "sales", "sale_items", "stock_moves", "customers",
     "due_payments", "expenses", "wallet_txns", "day_close", "users",
     "suppliers", "purchases", "purchase_items", "supplier_payments",
-    "held_bills", "photos"];
+    "held_bills", "photos", "staff", "recurring"];
+
+  /* Bump this whenever a name is added to TABLES.  A browser only runs
+     onupgradeneeded when the version goes up, so a shop that installed
+     the app before a table existed would otherwise never get that store
+     — and then every write failed, not just the ones to the new table,
+     because a transaction naming a missing store throws outright. */
+  const DB_VERSION = 2;
 
   // ------------------------------------------------------------ shop list
   function readShops() {
@@ -1930,7 +2336,7 @@ window.SHOP = {
     return new Promise(function (resolve) {
       let req;
       try {
-        req = indexedDB.open(self.dbName, 1);
+        req = indexedDB.open(self.dbName, DB_VERSION);
       } catch (e) {
         // Private windows and locked-down browsers refuse IndexedDB.  The
         // app still has to open — it just cannot remember anything, and it
@@ -1946,6 +2352,10 @@ window.SHOP = {
         if (!db.objectStoreNames.contains("settings")) db.createObjectStore("settings");
       };
       req.onerror = function () { self._failed = true; resolve(self); };
+      req.onblocked = function () {
+        // another tab is holding the old version open
+        self._blocked = true;
+      };
       req.onsuccess = function (ev) {
         self.idb = ev.target.result;
         self._loadAll().then(function () { resolve(self); });
@@ -2005,26 +2415,42 @@ window.SHOP = {
     if (!this.idb || this._failed) return Promise.resolve();
     const queue = this._queue;
     this._queue = {};
-    const names = Object.keys(queue);
-    if (!names.length) return Promise.resolve();
     const self = this;
-    return new Promise(function (resolve) {
-      let tx;
-      try { tx = self.idb.transaction(names, "readwrite"); }
-      catch (e) { return resolve(); }
-      names.forEach(function (name) {
-        const store = tx.objectStore(name);
-        const rows = queue[name];
-        Object.keys(rows).forEach(function (key) {
-          try {
-            if (name === "settings") store.put(rows[key], "all");
-            else store.put(rows[key]);
-          } catch (e) { /* one bad row must not lose the rest */ }
+    // Only name stores this database actually has.  One unknown name in
+    // the list aborts the whole transaction, which once meant a single
+    // new table could silently stop every sale from being saved.
+    const names = Object.keys(queue).filter(function (n) {
+      return self.idb.objectStoreNames.contains(n);
+    });
+    if (!names.length) return Promise.resolve();
+
+    function writeBatch(list) {
+      return new Promise(function (resolve) {
+        let tx;
+        try { tx = self.idb.transaction(list, "readwrite"); }
+        catch (e) { return resolve(false); }
+        list.forEach(function (name) {
+          const store = tx.objectStore(name);
+          const rows = queue[name];
+          Object.keys(rows).forEach(function (key) {
+            try {
+              if (name === "settings") store.put(rows[key], "all");
+              else store.put(rows[key]);
+            } catch (e) { /* one bad row must not lose the rest */ }
+          });
         });
+        tx.oncomplete = function () { resolve(true); };
+        tx.onerror = function () { resolve(false); };
+        tx.onabort = function () { resolve(false); };
       });
-      tx.oncomplete = function () { resolve(); };
-      tx.onerror = function () { resolve(); };
-      tx.onabort = function () { resolve(); };
+    }
+
+    return writeBatch(names).then(function (ok) {
+      if (ok) return true;
+      // the batch failed as a whole — try each table on its own so one
+      // bad store cannot take the others down with it
+      return Promise.all(names.map(function (n) { return writeBatch([n]); }))
+        .then(function () { return true; });
     });
   };
 
@@ -2052,18 +2478,24 @@ window.SHOP = {
 
   Store.prototype.importAll = function (data) {
     if (!data || data.format !== "pos-backup") throw new Error("not a backup file");
+    if (this._failed || !this.idb) {
+      return Promise.reject(new Error("this browser is not storing anything"));
+    }
     const self = this;
+    let rowCount = 0;
     TABLES.forEach(function (t) {
+      // A backup written by an older version simply has no row for a
+      // table added since; an empty list is the right answer, not a fault.
       const rows = (data.tables && data.tables[t]) || [];
       self.tables[t] = rows;
       let max = 0;
       rows.forEach(function (r) { if (r.id > max) max = r.id; });
       self.seq[t] = max;
-      rows.forEach(function (r) { self.put(t, r); });
+      rows.forEach(function (r) { self.put(t, r); rowCount += 1; });
     });
     self.tables.settings = (data.tables && data.tables.settings) || {};
     self.put("settings", self.tables.settings);
-    return self.flush();
+    return self.flush().then(function () { return rowCount; });
   };
 
   Store.prototype.wipe = function () {
@@ -2110,7 +2542,7 @@ window.SHOP = {
     "Dashboard":"ড্যাশবোর্ড","New sale":"নতুন বিক্রয়","Products":"পণ্য",
     "Customers":"কাস্টমার","Suppliers":"সাপ্লায়ার","Reports":"রিপোর্ট",
     "Profit & cash":"লাভ ও ক্যাশ","Mobile banking":"মোবাইল ব্যাংকিং",
-    "Settings":"সেটিংস","More":"আরও","Sale":"বিক্রয়","Dues":"বাকি",
+    "Settings":"সেটিংস","More":"আরও","Sale":"বিক্রয়","Dues":"বাকি","Expenses":"খরচ",
     // common
     "Save":"সেভ","Cancel":"বাতিল","Delete":"মুছুন","Edit":"এডিট","Close":"বন্ধ",
     "Add":"যোগ","Search":"খুঁজুন","Today":"আজ","Yesterday":"গতকাল",
@@ -2120,7 +2552,7 @@ window.SHOP = {
     "Qty":"পরিমাণ","Price":"দাম","Cost":"ক্রয়মূল্য","Stock":"স্টক",
     "Unit":"একক","Category":"ধরন","Actions":"কাজ","Print":"প্রিন্ট",
     "Yes":"হ্যাঁ","No":"না","All":"সব","None":"কিছু নেই","Back":"পিছনে",
-    "Paid":"পরিশোধ","Due":"বাকি","Cash":"ক্যাশ","Method":"যেভাবে",
+    "Paid":"পরিশোধ","Due":"বাকি","Cash":"ক্যাশ","Method":"যেভাবে","Paid by":"যেভাবে দিলেন",
     "Excel":"এক্সেল","Download":"ডাউনলোড","Nothing here yet":"এখনো কিছু নেই",
     "Are you sure?":"আপনি কি নিশ্চিত?","This cannot be undone.":"এটা আর ফেরানো যাবে না।",
     "Required":"অবশ্যই দিতে হবে","Enter an amount":"টাকার পরিমাণ লিখুন",
@@ -2140,8 +2572,10 @@ window.SHOP = {
     "Scan or type a product name":"বারকোড স্ক্যান বা পণ্যের নাম লিখুন",
     "Cart is empty":"কার্ট খালি","Tap a product to start":"পণ্যে চাপ দিয়ে শুরু করুন",
     "Subtotal":"উপমোট","Discount":"ছাড়","Tax":"ট্যাক্স","Delivery":"ডেলিভারি",
-    "Grand total":"সর্বমোট","Cash received":"ক্যাশ নেওয়া হলো",
-    "Mobile / bKash":"মোবাইল / বিকাশ","TrxID":"TrxID","Change":"ফেরত",
+    "Grand total":"সর্বমোট","Cash received":"ক্যাশে কত টাকা",
+    "Mobile / bKash":"বিকাশ/নগদে কত টাকা","TrxID":"TrxID","Change":"ফেরত",
+    "amount":"টাকার অঙ্ক",
+    "That looks like a phone number — type the amount here":"এটা কি ফোন নম্বর? এখানে টাকার অঙ্ক লিখুন",
     "Complete sale":"বিক্রয় সম্পন্ন","Hold":"হোল্ড","Held bills":"হোল্ড করা বিল",
     "Walk-in":"সাধারণ কাস্টমার","Attach customer":"কাস্টমার যোগ করুন",
     "Quick item":"দ্রুত আইটেম","Clear":"খালি করুন",
@@ -2192,6 +2626,7 @@ window.SHOP = {
     "Erase everything":"সব মুছে ফেলুন","Storage used":"জায়গা ব্যবহৃত",
     "Bengali numbers on receipts":"মেমোতে বাংলা সংখ্যা",
     "Paper width":"কাগজের মাপ","Receipt design":"মেমোর ডিজাইন",
+    "Memo style":"মেমো যেভাবে","A4 memo":"A4 মেমো",
     "Footer message":"নিচের বার্তা",
   };
   let lang = "bn";
@@ -2526,7 +2961,16 @@ window.SHOP = {
       // a number input throws on selectionStart in some browsers
       try { start = live.selectionStart; end = live.selectionEnd; } catch (err) {}
     }
+    // Rebuilding empties the page for an instant; without this the
+    // browser loses its place and the screen snaps back to the top
+    // after every single character.
+    const y = root.scrollY || document.documentElement.scrollTop || 0;
     redraw();
+    if (y) {
+      root.scrollTo(0, y);
+      // the new content may still be laying out
+      requestAnimationFrame(function () { root.scrollTo(0, y); });
+    }
     if (!key) return;
     const next = document.querySelector('[data-k="' + key + '"]');
     if (!next || next === document.activeElement) return;
@@ -2580,6 +3024,8 @@ window.SHOP = {
     eye:       "M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Zm9.5 2.8a2.8 2.8 0 1 0 0-5.6 2.8 2.8 0 0 0 0 5.6Z",
     camera:    "M3.5 8.5h3l1.6-2.4h7.8l1.6 2.4h3v10.4h-17V8.5Zm8.5 8.2a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z",
     alert:     "M12 3.5 21 19.5H3L12 3.5Zm0 5.4v5m0 2.6h.01",
+    page:      "M6 2.6h7.6L19 8v13.4H6V2.6Zm7.4 0V8.2H19M9 12.5h6M9 16h6",
+    expense:   "M3 7.5h18v12H3v-12Zm0 0 3-4h12l3 4M8.5 12h7m-7 3.5h4",
     shop:      "M4 9.5h16V20H4V9.5Zm-.5-1.2L5.2 4h13.6l1.7 4.3a3 3 0 0 1-5.3 2.2 3 3 0 0 1-5.3 0 3 3 0 0 1-5.3-2.2ZM9.5 20v-5.5h5V20",
   };
 
@@ -2596,7 +3042,7 @@ window.SHOP = {
     "\u2713": "check", "\u2714": "check",
     "\u21E9": "download", "\u2B07": "download", "\u21E7": "upload", "\u2B06": "upload",
     "\uD83D\uDDD1": "trash", "\u270E": "edit", "\uD83D\uDD0D": "search",
-    "\uD83D\uDDA8": "print", "\uD83D\uDFE2": "whatsapp",
+    "\uD83D\uDDA8": "print", "\uD83D\uDFE2": "whatsapp", "\uD83D\uDCC4": "page",
     "\uD83D\uDCE6": "products", "\uD83D\uDED2": "till",
     "\uD83D\uDC65": "customers", "\uD83D\uDC64": "user",
     "\uD83D\uDE9A": "suppliers", "\uD83D\uDCC8": "reports",
@@ -2761,6 +3207,7 @@ window.SHOP = {
     ["dues",      "dues",      "Dues"],
     ["customers", "customers", "Customers"],
     ["suppliers", "suppliers", "Suppliers"],
+    ["expenses",  "expense",   "Expenses"],
     ["reports",   "reports",   "Reports"],
     ["money",     "money",     "Profit & cash"],
     ["agent",     "agent",     "Mobile banking"],
@@ -2855,11 +3302,16 @@ window.SHOP = {
         if (root.console) console.error(err);
       }
     }
-    page.scrollIntoView ? window.scrollTo(0, 0) : null;
+    if (!App._keeping) window.scrollTo(0, 0);
   };
 
   App.register = function (name, fn) { App._views[name] = fn; };
-  App.refresh = function () { App.go(App.view, App.params); };
+  /** Redraw the current screen in place: same scroll, same caret. */
+  App.refresh = function () {
+    App._keeping = true;
+    try { App.keepFocus(function () { App.go(App.view, App.params); }); }
+    finally { App._keeping = false; }
+  };
 
   App.weekday = function (day) {
     const d = asDate(day);
@@ -3233,6 +3685,14 @@ window.SHOP = {
 
   function lineTotal(l) { return r2(Math.max(l.qty, 0) * Math.max(l.price, 0)); }
 
+
+  /** 01XXXXXXXXX typed into a money box.  Eleven digits starting 01 is a
+   *  Bangladeshi mobile number and never a plausible bill. */
+  function looksLikePhone(v) {
+    const d = String(v || "").replace(/\D/g, "");
+    return d.length === 11 && d.slice(0, 2) === "01";
+  }
+
   function compute() {
     let subtotal = 0;
     cart.lines.forEach(function (l) { subtotal += lineTotal(l); });
@@ -3419,15 +3879,30 @@ window.SHOP = {
     ]));
 
     // ---- payment
+    /* These two boxes take an AMOUNT.  Labelled "Mobile / bKash" a
+       shopkeeper reads them as "the customer's mobile number" and types
+       one in — a real bill went out with 1,924,277,708 taka against it.
+       The label now says money, and a phone-shaped number is called out
+       under the box before the sale can be completed. */
     const cashInp = A.field(T("Cash received"), { type: "number", inputmode: "decimal",
-      value: cart.cash, min: 0, key: "cash" });
-    cashInp.input.addEventListener("input", function () { cart.cash = cashInp.input.value; paint(); });
+      value: cart.cash, min: 0, key: "cash", placeholder: T("amount") });
+    cashInp.input.addEventListener("input", function () {
+      cart.cash = cashInp.input.value; paint(); });
     const mobInp = A.field(T("Mobile / bKash"), { type: "number", inputmode: "decimal",
-      value: cart.mobile, min: 0, key: "mobile" });
-    mobInp.input.addEventListener("input", function () { cart.mobile = mobInp.input.value; paint(); });
+      value: cart.mobile, min: 0, key: "mobile", placeholder: T("amount") });
+    mobInp.input.addEventListener("input", function () {
+      cart.mobile = mobInp.input.value; paint(); });
     const pay = el("div", { class: "row", style: { marginTop: "12px", gap: "8px" } },
       [el("div", { class: "grow" }, [cashInp]), el("div", { class: "grow" }, [mobInp])]);
     cartBox.appendChild(pay);
+
+    [[cashInp, cart.cash], [mobInp, cart.mobile]].forEach(function (pair) {
+      if (!looksLikePhone(pair[1])) return;
+      pair[0].appendChild(el("div", { class: "tiny", style: { color: "var(--bad)",
+        fontWeight: "700", marginTop: "4px" },
+        text: T("That looks like a phone number — type the amount here") }));
+      pair[0].input.style.borderColor = "var(--bad)";
+    });
 
     if (t.paid_mobile > 0) {
       const w = A.field("", { type: "select", value: cart.wallet,
@@ -3563,6 +4038,25 @@ window.SHOP = {
   function complete() {
     if (!cart.lines.length) return A.toast(T("Cart is empty"), "warn");
     const t = compute();
+
+    /* Last gate before a wrong figure is written into the books. */
+    const phoney = [cart.cash, cart.mobile].some(looksLikePhone);
+    const absurd = t.grand_total > 0 && t.paid > t.grand_total * 20 && t.paid > 10000;
+    if (phoney || absurd) {
+      A.confirm(root.isBn() ? "টাকার অঙ্কটা মিলছে না" : "That amount looks wrong",
+        (root.isBn()
+          ? "বিলের সর্বমোট " + A.money(t.grand_total) + ", কিন্তু নেওয়া হয়েছে "
+            + A.money(t.paid) + "।\n\nফোন নম্বর লিখে ফেলেননি তো? "
+            + "ওই ঘরে টাকার অঙ্ক লিখতে হয়।\n\nতবুও সেভ করব?"
+          : "The bill is " + A.money(t.grand_total) + " but " + A.money(t.paid)
+            + " was entered.\n\nDid a phone number go into the amount box?"
+            + "\n\nSave anyway?"),
+        { danger: true }).then(function (y) { if (y) proceed(); });
+      return;
+    }
+    proceed();
+
+    function proceed() {
     const finish = function () {
       if (t.paid_mobile > 0 && !t.trx_id) {
         A.confirm(T("TrxID"), root.isBn()
@@ -3579,6 +4073,7 @@ window.SHOP = {
       return;
     }
     finish();
+    }
   }
 
   function save(t) {
@@ -3629,7 +4124,7 @@ window.SHOP = {
       if (hit) { addProduct(hit, 1); search.input.value = ""; state.search = ""; paintPicker(); }
       else A.toast(root.isBn() ? "এই কোডে পণ্য পাওয়া যায়নি" : "No product for that code", "warn");
     });
-    left.appendChild(el("div", { class: "card card-pad row", style: { gap: "8px" } }, [
+    left.appendChild(el("div", { class: "card card-pad toolbar" }, [
       search,
       el("button", { class: "btn btn-sm", text: "✚ " + T("Quick item"), onclick: quickItem }),
     ]));
@@ -3856,7 +4351,7 @@ window.SHOP = {
   // -------------------------------------------------------------- view
   A.register("products", function (page) {
     let search = (A.params && A.params.search) || "";
-    const bar = el("div", { class: "card card-pad row", style: { gap: "8px" } });
+    const bar = el("div", { class: "card card-pad toolbar" });
     const box = A.field("", { placeholder: "🔍 " + T("Search"), value: search, wide: true });
     box.input.addEventListener("input", function () { search = box.val(); draw(); });
     bar.appendChild(box);
@@ -3885,11 +4380,11 @@ window.SHOP = {
           el("div", { text: T("Nothing here yet") })]));
         return;
       }
-      const tbl = el("table", { class: "tbl" });
+      const tbl = el("table", { class: "tbl tbl-cards" });
       tbl.appendChild(el("thead", {}, [el("tr", {}, [
-        el("th", { class: "fit", text: "" }), el("th", { text: T("Name") }),
+        el("th", { class: "fit col-photo", text: "" }), el("th", { text: T("Name") }),
         el("th", { class: "fit", text: T("Stock") }),
-        el("th", { class: "fit right pad", text: T("Cost") }),
+        el("th", { class: "fit right pad col-cost", text: T("Cost") }),
         el("th", { class: "fit right pad", text: T("Price") }),
         el("th", { class: "fit right", text: T("Actions") }),
       ])]));
@@ -3898,22 +4393,22 @@ window.SHOP = {
         const url = p.photo_id ? A.photoUrl(p.photo_id) : null;
         const low = Number(p.low_stock_at) > 0 && Number(p.stock) <= Number(p.low_stock_at);
         body.appendChild(el("tr", {}, [
-          el("td", { class: "fit" }, [
+          el("td", { class: "fit col-photo" }, [
             url ? el("img", { src: url, alt: "", style: { width: "40px", height: "40px",
               borderRadius: "8px", objectFit: "cover" } })
                 : el("div", { style: { width: "40px", height: "40px", borderRadius: "8px",
               background: "var(--surface3)", display: "grid", placeItems: "center" },
               text: "📦" })]),
-          el("td", {}, [
+          el("td", { class: "c-name" }, [
             el("div", { style: { fontWeight: "700" }, text: p.name }),
             el("div", { class: "tiny faint", text: [p.category, p.sku].filter(Boolean).join(" · ") }),
           ]),
-          el("td", { class: "fit" }, [el("span", { class: "chip " + (low ? "chip-warn" : ""),
+          el("td", { class: "fit c-stock" }, [el("span", { class: "chip " + (low ? "chip-warn" : ""),
             text: A.qty(p.stock) + " " + (p.unit || "") })]),
-          el("td", { class: "fit right pad muted", text: A.money(p.cost_price) }),
-          el("td", { class: "fit right pad", style: { fontWeight: "700" },
+          el("td", { class: "fit right pad muted col-cost", text: A.money(p.cost_price) }),
+          el("td", { class: "fit right pad c-price", style: { fontWeight: "700" },
             text: A.money(p.sale_price) }),
-          el("td", { class: "fit right nowrap" }, [
+          el("td", { class: "fit right nowrap c-act" }, [
             el("button", { class: "btn btn-sm", text: "＋", title: T("Restock"),
               onclick: function () { A.restock(p); } }),
             el("button", { class: "btn btn-sm", text: "✎", title: T("Edit"),
@@ -3989,12 +4484,31 @@ window.SHOP = {
     const name = A.field(T("Name") + " *", { value: c.name || "" });
     const phone = A.field(T("Phone"), { value: c.phone || "", inputmode: "tel",
       placeholder: "01XXXXXXXXX" });
+    /* Almost every shop customer uses WhatsApp on the number they
+       already gave, so asking for it twice was pure friction.  The
+       second box only appears for the rare customer whose WhatsApp
+       sits on a different number. */
     const wa = A.field("WhatsApp", { value: c.whatsapp || "", inputmode: "tel",
-      hint: root.isBn() ? "ফাঁকা রাখলে ফোন নম্বরই ব্যবহার হবে" : "blank = use the phone number" });
+      placeholder: "01XXXXXXXXX" });
+    const differs = !!(c.whatsapp && c.phone && c.whatsapp !== c.phone);
+    const waBox = el("div", { class: "hide", style: { marginTop: "10px" } }, [wa]);
+    const waToggle = el("label", { class: "checkrow" }, [
+      el("input", { type: "checkbox", checked: differs ? "checked" : null }),
+      el("span", { text: root.isBn() ? "WhatsApp নম্বর আলাদা"
+                                     : "WhatsApp is a different number" }),
+    ]);
+    waToggle.querySelector("input").addEventListener("change", function () {
+      waBox.classList.toggle("hide", !this.checked);
+      if (this.checked && !wa.input.value) wa.input.value = phone.input.value;
+      if (!this.checked) wa.input.value = "";
+    });
+    if (differs) waBox.classList.remove("hide");
+
     const addr = A.field(T("Address"), { type: "textarea", value: c.address || "" });
     m.body.appendChild(name);
-    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
-      [el("div", { class: "grow" }, [phone]), el("div", { class: "grow" }, [wa])]));
+    m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [phone]));
+    m.body.appendChild(el("div", { style: { marginTop: "8px" } }, [waToggle]));
+    m.body.appendChild(waBox);
     m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [addr]));
     m.footer.appendChild(el("button", { class: "btn", text: T("Cancel"), onclick: m.close }));
     m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Save"),
@@ -4010,7 +4524,7 @@ window.SHOP = {
 
   A.register("customers", function (page) {
     let search = "";
-    const bar = el("div", { class: "card card-pad row", style: { gap: "8px" } });
+    const bar = el("div", { class: "card card-pad toolbar" });
     const box = A.field("", { placeholder: "🔍 " + T("Search"), wide: true });
     box.input.addEventListener("input", function () { search = box.val(); draw(); });
     bar.appendChild(box);
@@ -4041,23 +4555,26 @@ window.SHOP = {
       if (!rows.length) return card.appendChild(el("div", { class: "empty" }, [
         el("div", { class: "big", text: "👥" }), el("div", { text: T("Nothing here yet") })]));
       const tbl = el("table", { class: "tbl" });
+      tbl.className = "tbl tbl-cards cust-tbl";
       tbl.appendChild(el("thead", {}, [el("tr", {}, [
-        el("th", { text: T("Name") }), el("th", { text: T("Phone") }),
-        el("th", { class: "right", text: T("Due") }),
-        el("th", { class: "right", text: T("Actions") })])]));
+        el("th", { text: T("Name") }), el("th", { class: "fit", text: T("Phone") }),
+        el("th", { class: "fit right pad", text: T("Due") }),
+        el("th", { class: "fit right", text: T("Actions") })])]));
       const body = el("tbody");
       rows.forEach(function (c) {
         const owes = Number(c.due) > 0;
         const phone = c.whatsapp || c.phone;
         const text = A.eng.reminderText(c, root.isBn() ? "bn" : "en");
         body.appendChild(el("tr", {}, [
-          el("td", {}, [el("div", { style: { fontWeight: "700" }, text: c.name }),
-            c.address ? el("div", { class: "tiny faint", text: c.address }) : null]),
-          el("td", { class: "muted nowrap", text: c.phone || "" }),
-          el("td", { class: "right" }, [owes
+          el("td", { class: "c-name" }, [
+            el("div", { style: { fontWeight: "700" }, text: c.name }),
+            el("div", { class: "tiny faint",
+              text: [c.phone, c.address].filter(Boolean).join(" · ") })]),
+          el("td", { class: "fit muted nowrap c-hide-phone", text: c.phone || "" }),
+          el("td", { class: "fit right pad c-price" }, [owes
             ? el("span", { class: "chip chip-warn", text: A.money(c.due) })
             : el("span", { class: "faint", text: "—" })]),
-          el("td", { class: "right nowrap" }, [
+          el("td", { class: "fit right nowrap c-act" }, [
             owes && phone ? el("a", { class: "btn btn-sm btn-ok", text: "🟢",
               title: T("Remind on WhatsApp"), target: "_blank", rel: "noopener",
               href: A.eng.waLink(phone, text) }) : null,
@@ -4176,7 +4693,7 @@ window.SHOP = {
   A.buyStock = purchaseDialog;
 
   A.register("suppliers", function (page) {
-    const bar = el("div", { class: "card card-pad row", style: { gap: "8px" } });
+    const bar = el("div", { class: "card card-pad toolbar" });
     bar.appendChild(el("div", { class: "grow" }, [
       el("div", { class: "tiny faint", text: T("Payable to suppliers") }),
       el("strong", { style: { fontSize: "1.3rem",
@@ -4613,7 +5130,13 @@ window.SHOP = {
     return bn[d.getMonth()] + " " + root.bnDigits(String(d.getFullYear()));
   }
 
-  function rangeFor(mode, anchor) {
+  function rangeFor(mode, anchor, custom) {
+    if (mode === "custom") {
+      const from = (custom && custom.from) || dayKey(new Date());
+      const to = (custom && custom.to) || dayKey(new Date());
+      const a = from <= to ? from : to, b = from <= to ? to : from;
+      return { start: a, end: b, label: A.dateText(a) + " – " + A.dateText(b) };
+    }
     const d = anchor ? new Date(anchor) : new Date();
     if (mode === "daily") {
       const start = new Date(d.getFullYear(), d.getMonth(), 1);
@@ -4659,44 +5182,94 @@ window.SHOP = {
     let mode = "daily";
     let anchor = new Date();
 
-    const head = el("div", { class: "card card-pad row", style: { gap: "10px" } });
+    const custom = { from: dayKey(new Date()), to: dayKey(new Date()) };
+    const head = el("div", { class: "card card-pad repbar" });
     const seg = el("div", { class: "seg" });
-    const label = el("strong", { class: "nowrap" });
+    const label = el("strong", { class: "lbl" });
     const body = el("div", { style: { marginTop: "var(--gap)" } });
-    page.appendChild(head); page.appendChild(body);
+    page.appendChild(head);
 
-    ["daily", "monthly", "yearly"].forEach(function (m) {
-      seg.appendChild(el("button", { class: mode === m ? "on" : "",
-        text: T(m.charAt(0).toUpperCase() + m.slice(1)),
-        onclick: function () { mode = m; anchor = new Date(); draw(); } }));
+    const MODES = [["daily", root.isBn() ? "দৈনিক" : "Daily"],
+                   ["monthly", root.isBn() ? "মাসিক" : "Monthly"],
+                   ["yearly", root.isBn() ? "বার্ষিক" : "Yearly"],
+                   ["custom", root.isBn() ? "তারিখ ধরে" : "Pick dates"]];
+    MODES.forEach(function (m) {
+      seg.appendChild(el("button", { class: mode === m[0] ? "on" : "", text: m[1],
+        onclick: function () { mode = m[0]; anchor = new Date(); draw(); } }));
     });
     head.appendChild(seg);
-    head.appendChild(el("div", { class: "row grow", style: { gap: "6px",
-      justifyContent: "center" } }, [
-      el("button", { class: "btn btn-sm", text: "‹", onclick: function () {
-        if (mode === "daily") anchor.setMonth(anchor.getMonth() - 1);
-        else anchor.setFullYear(anchor.getFullYear() - 1);
-        draw();
-      } }),
+    const stepper = el("div", { class: "stepper" }, [
+      el("button", { class: "btn btn-sm btn-icon", text: "‹",
+        title: root.isBn() ? "আগের" : "Previous", onclick: function () {
+          if (mode === "daily") anchor.setMonth(anchor.getMonth() - 1);
+          else anchor.setFullYear(anchor.getFullYear() - 1);
+          draw();
+        } }),
       label,
-      el("button", { class: "btn btn-sm", text: "›", onclick: function () {
-        if (mode === "daily") anchor.setMonth(anchor.getMonth() + 1);
-        else anchor.setFullYear(anchor.getFullYear() + 1);
+      el("button", { class: "btn btn-sm btn-icon", text: "›",
+        title: root.isBn() ? "পরের" : "Next", onclick: function () {
+          if (mode === "daily") anchor.setMonth(anchor.getMonth() + 1);
+          else anchor.setFullYear(anchor.getFullYear() + 1);
+          draw();
+        } }),
+    ]);
+    head.appendChild(stepper);
+
+    /* Two dates and four shortcuts — most of the time the shopkeeper
+       wants "this month" or "last 7 days", not a calendar. */
+    const fromF = A.field(root.isBn() ? "থেকে" : "From",
+      { type: "date", value: custom.from, key: "rep-from" });
+    const toF = A.field(root.isBn() ? "পর্যন্ত" : "To",
+      { type: "date", value: custom.to, key: "rep-to" });
+    fromF.input.addEventListener("change", function () {
+      custom.from = fromF.input.value || custom.from; draw(); });
+    toF.input.addEventListener("change", function () {
+      custom.to = toF.input.value || custom.to; draw(); });
+
+    function shortcut(labelText, days, whole) {
+      return el("button", { class: "btn btn-sm", text: labelText, onclick: function () {
+        const now = new Date();
+        if (whole === "month") {
+          custom.from = dayKey(new Date(now.getFullYear(), now.getMonth(), 1));
+          custom.to = dayKey(now);
+        } else if (whole === "lastmonth") {
+          custom.from = dayKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+          custom.to = dayKey(new Date(now.getFullYear(), now.getMonth(), 0));
+        } else {
+          const back = new Date(now); back.setDate(back.getDate() - (days - 1));
+          custom.from = dayKey(back); custom.to = dayKey(now);
+        }
+        fromF.input.value = custom.from; toF.input.value = custom.to;
         draw();
-      } }),
-    ]));
+      } });
+    }
+    const picker = el("div", { class: "datepick" }, [
+      el("div", { class: "row", style: { gap: "10px" } }, [fromF, toF]),
+      el("div", { class: "row", style: { gap: "6px", marginTop: "10px" } }, [
+        shortcut(root.isBn() ? "আজ" : "Today", 1),
+        shortcut(root.isBn() ? "৭ দিন" : "7 days", 7),
+        shortcut(root.isBn() ? "এ মাসে" : "This month", 0, "month"),
+        shortcut(root.isBn() ? "গত মাস" : "Last month", 0, "lastmonth"),
+      ]),
+    ]);
+
     const dl = el("button", { class: "btn btn-sm btn-pri", text: "⇩ " + T("Excel") });
     head.appendChild(dl);
+    page.appendChild(picker);
+    page.appendChild(body);
 
     function draw() {
       A.$$(".seg button", head).forEach(function (b, i) {
-        b.className = ["daily", "monthly", "yearly"][i] === mode ? "on" : "";
+        b.className = MODES[i] && MODES[i][0] === mode ? "on" : "";
       });
-      const r = rangeFor(mode, anchor);
-      label.textContent = mode === "yearly" ? r.label
+      const pick = mode === "custom";
+      picker.classList.toggle("hide", !pick);
+      stepper.classList.toggle("hide", pick);
+      const r = rangeFor(mode, anchor, custom);
+      label.textContent = (mode === "yearly" || mode === "custom") ? r.label
         : (root.isBn() ? root.bnDigits(r.label) : r.label);
       const sales = A.eng.salesBetween(r.start, r.end);
-      const rows = bucket(mode, sales);
+      const rows = bucket(mode === "custom" ? "daily" : mode, sales);
 
       A.clear(body);
       const totals = rows.reduce(function (t, b) {
@@ -4737,7 +5310,7 @@ window.SHOP = {
         rows.forEach(function (b) {
           tb.appendChild(el("tr", {}, [
             el("td", { class: "nowrap", style: { fontWeight: "700" },
-              text: mode === "daily" ? A.dateText(b.key)
+              text: (mode === "daily" || mode === "custom") ? A.dateText(b.key)
                 : (root.isBn() ? root.bnDigits(b.key) : b.key) }),
             el("td", { class: "right", text: A.qty(b.orders) }),
             el("td", { class: "right", text: A.money(b.revenue) }),
@@ -4829,6 +5402,9 @@ window.SHOP = {
       text: A.receiptText(s, items) }));
     m.footer.appendChild(el("button", { class: "btn", text: "🖨 " + T("Print"),
       onclick: function () { A.printReceipt(s, items); } }));
+    m.footer.appendChild(el("button", { class: "btn",
+      text: "📄 " + (root.isBn() ? "A4 মেমো" : "A4 memo"),
+      onclick: function () { A.showInvoice && A.showInvoice(s, items); } }));
     if (s.customer_phone) {
       m.footer.appendChild(el("button", { class: "btn btn-ok",
         text: "🟢 WhatsApp", onclick: function () { A.shareReceipt(s, items); } }));
@@ -4946,72 +5522,21 @@ window.SHOP = {
     }
 
     function drawExpenses() {
-      const r = ranges()[rangeKey];
-      body.appendChild(rangePicker(draw));
-      const rows = A.eng.expensesBetween(r.start, r.end);
-      const total = A.eng.expenseTotal(r.start, r.end);
-      body.appendChild(el("div", { class: "card card-pad spread",
-        style: { marginBottom: "var(--gap)" } }, [
-        el("div", {}, [el("div", { class: "tiny faint", text: T("Expenses") }),
-          el("strong", { style: { fontSize: "1.4rem" }, text: A.money(total) })]),
-        el("div", { class: "row", style: { gap: "8px" } }, [
-          el("button", { class: "btn btn-sm", text: "⇩ " + T("Excel"), onclick: function () {
-            A.xlsx(T("Expenses"), [["Date", "Category", "Method", "Note", "Amount"]]
-              .concat(rows.map(function (e) {
-                return [e.spent_on, e.category, e.method, e.note, e.amount]; })), "expenses");
-          } }),
-          el("button", { class: "btn btn-sm btn-pri", text: "＋ " + T("Add expense"),
-            onclick: addExpense }),
-        ]),
+      /* Expenses grew their own screen — rent, wages, regular bills and
+         the owner's own spending.  Keeping a second, thinner copy here
+         would only let the two disagree. */
+      body.appendChild(el("div", { class: "card card-pad stack center",
+        style: { alignItems: "center", gap: "12px", padding: "38px 20px" } }, [
+        el("div", { style: { color: "var(--faint)" } }, [A.icon("expense")]),
+        el("h3", { style: { fontSize: "1.1rem" },
+          text: root.isBn() ? "খরচের নিজের পাতা আছে" : "Expenses have their own screen" }),
+        el("div", { class: "muted small", style: { maxWidth: "420px" },
+          text: root.isBn()
+            ? "দোকানের খরচ, নিয়মিত খরচ, কর্মচারীর বেতন আর নিজের খরচ — সব ওখানে।"
+            : "Shop costs, regular bills, wages and personal spending are all there." }),
+        el("button", { class: "btn btn-pri", text: root.isBn() ? "খরচে যান" : "Open expenses",
+          onclick: function () { A.go("expenses"); } }),
       ]));
-      const card = el("div", { class: "card" });
-      if (!rows.length) card.appendChild(el("div", { class: "empty" }, [
-        el("div", { class: "big", text: "🧾" }), el("div", { text: T("Nothing here yet") })]));
-      else {
-        const tbl = el("table", { class: "tbl" });
-        tbl.appendChild(el("thead", {}, [el("tr", {}, [
-          el("th", { text: T("Date") }), el("th", { text: T("Category") }),
-          el("th", { text: T("Method") }), el("th", { class: "right", text: T("Amount") })])]));
-        const tb = el("tbody");
-        rows.forEach(function (e) {
-          tb.appendChild(el("tr", {}, [
-            el("td", { class: "nowrap", text: A.dateText(e.spent_on) }),
-            el("td", {}, [el("div", { text: T(e.category) }),
-              e.note ? el("div", { class: "tiny faint", text: e.note }) : null]),
-            el("td", {}, [el("span", { class: "chip", text: T(e.method || "Cash") })]),
-            el("td", { class: "right", style: { fontWeight: "700" }, text: A.money(e.amount) }),
-          ]));
-        });
-        tbl.appendChild(tb);
-        card.appendChild(el("div", { class: "scroll-x" }, [tbl]));
-      }
-      body.appendChild(card);
-    }
-
-    function addExpense() {
-      const m = A.modal({ title: T("Add expense") });
-      const cats = ["Shop rent", "Electricity", "Transport", "Salary", "Supplies",
-                    "Repairs", "Other"];
-      const cat = A.field(T("Category"), { type: "select", value: cats[0],
-        options: cats.map(function (c) { return { value: c, label: T(c) }; }) });
-      const amt = A.field(T("Amount"), { type: "number", inputmode: "decimal", min: 0 });
-      const how = A.field(T("Paid by"), { type: "select", value: "Cash",
-        options: ["Cash", "bKash", "Nagad", "Rocket", "Bank"] });
-      const when = A.field(T("Date"), { type: "date", value: H.dayKey() });
-      const note = A.field(T("Note"), { type: "textarea" });
-      m.body.appendChild(cat);
-      m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
-        [el("div", { class: "grow" }, [amt]), el("div", { class: "grow" }, [how])]));
-      m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [when]));
-      m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [note]));
-      m.footer.appendChild(el("button", { class: "btn", text: T("Cancel"), onclick: m.close }));
-      m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Save"),
-        onclick: function () {
-          if (amt.num(0) <= 0) return A.toast(T("Enter an amount"), "warn");
-          A.eng.addExpense(cat.val(), amt.num(0), note.val(), when.val(),
-            A.user ? A.user.id : null, how.val());
-          m.close(); A.toast(T("Saved"), "ok"); draw();
-        } }));
     }
 
     function drawClose() {
@@ -5370,6 +5895,723 @@ window.SHOP = {
 </script>
 <script>
 /* =================================================================
+   খরচ — where the money went.
+
+   Four books on one screen, because a shopkeeper thinks of them as
+   four different questions:
+     দোকানের খরচ  what running the shop cost this month
+     নিয়মিত       the bills that are the same every month
+     কর্মচারী      who is owed what, and what they have drawn
+     নিজের খরচ    what the owner took home — never a shop cost
+   ================================================================= */
+(function (root) {
+  "use strict";
+  const A = root.App, el = A.el, T = root.T;
+  const H = root.POSEngine.helpers;
+  const bn = function () { return root.isBn(); };
+  const L = function (b, e) { return bn() ? b : e; };
+
+  /* The stored value stays English so a shop can switch language and
+     keep its history readable; only the label is translated. */
+  const CATS = [
+    ["Shop rent",   "দোকান ভাড়া"],
+    ["Electricity", "বিদ্যুৎ বিল"],
+    ["Salary",      "কর্মচারীর বেতন"],
+    ["Transport",   "গাড়ি / পরিবহন"],
+    ["Tea & snacks", "চা-নাস্তা"],
+    ["Repairs",     "মেরামত"],
+    ["Internet",    "ইন্টারনেট / মোবাইল"],
+    ["Packaging",   "প্যাকেট / ব্যাগ"],
+    ["Municipal",   "ট্রেড লাইসেন্স / সরকারি"],
+    ["Staff advance", "কর্মচারীর আগাম"],
+    ["Other",       "অন্যান্য"],
+  ];
+  const PERSONAL_CATS = [
+    ["Household",  "ঘরের বাজার"],
+    ["Pocket",     "হাত খরচ"],
+    ["Education",  "ছেলেমেয়ের পড়াশোনা"],
+    ["Medical",    "চিকিৎসা"],
+    ["Rent (home)", "বাসা ভাড়া"],
+    ["Other",      "অন্যান্য"],
+  ];
+  function catLabel(value) {
+    const hit = CATS.concat(PERSONAL_CATS).find(function (c) { return c[0] === value; });
+    return hit ? (bn() ? hit[1] : hit[0]) : value;
+  }
+  function catOptions(kind) {
+    const own = (A.eng.setting("own_categories", "") || "")
+      .split("\n").map(function (x) { return x.trim(); }).filter(Boolean);
+    return (kind === "personal" ? PERSONAL_CATS : CATS)
+      .map(function (c) { return { value: c[0], label: bn() ? c[1] : c[0] }; })
+      .concat(own.map(function (c) { return { value: c, label: c }; }));
+  }
+
+  const METHODS = ["Cash", "bKash", "Nagad", "Rocket", "Bank"];
+
+  function monthName(key) {
+    const d = new Date(key + "-01T00:00:00");
+    const m = bn()
+      ? ["জানুয়ারি","ফেব্রুয়ারি","মার্চ","এপ্রিল","মে","জুন",
+         "জুলাই","আগস্ট","সেপ্টেম্বর","অক্টোবর","নভেম্বর","ডিসেম্বর"]
+      : ["January","February","March","April","May","June",
+         "July","August","September","October","November","December"];
+    const y = String(d.getFullYear());
+    return m[d.getMonth()] + " " + (bn() ? root.bnDigits(y) : y);
+  }
+  function monthBounds(key) {
+    const d = new Date(key + "-01T00:00:00");
+    const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    return { start: key + "-01", end: H.dayKey(last) };
+  }
+  /** The span of the same length that ends the day before this one. */
+  function previousSpan(r) {
+    const a = new Date(r.start + "T00:00:00"), b = new Date(r.end + "T00:00:00");
+    const days = Math.round((b - a) / 86400000) + 1;
+    const end = new Date(a); end.setDate(end.getDate() - 1);
+    const start = new Date(end); start.setDate(start.getDate() - (days - 1));
+    return { start: H.dayKey(start), end: H.dayKey(end) };
+  }
+
+  function shiftMonth(key, by) {
+    const d = new Date(key + "-01T00:00:00");
+    d.setMonth(d.getMonth() + by);
+    return H.dayKey(d).slice(0, 7);
+  }
+
+  /* --------------------------------------------------------- dialogs */
+  function expenseDialog(opts) {
+    opts = opts || {};
+    const kind = opts.kind === "personal" ? "personal" : "shop";
+    const row = opts.row || null;
+    const m = A.modal({ title: row
+      ? L("খরচ বদলান", "Edit expense")
+      : (kind === "personal" ? L("নিজের খরচ", "Personal expense")
+                             : L("দোকানের খরচ", "Shop expense")) });
+
+    const cats = catOptions(kind);
+    const cat = A.field(T("Category"), { type: "select",
+      value: row ? row.category : cats[0].value, options: cats });
+    const amt = A.field(L("কত টাকা", "Amount"), { type: "number", inputmode: "decimal",
+      min: 0, value: row ? row.amount : "", placeholder: T("amount"), key: "exp-amt" });
+    const how = A.field(L("যেভাবে দিলেন", "Paid by"), { type: "select",
+      value: row ? (row.method || "Cash") : "Cash", options: METHODS });
+    const when = A.field(L("কোন তারিখে", "Date"), { type: "date",
+      value: row ? row.spent_on : H.dayKey() });
+    const note = A.field(T("Note"), { value: row ? row.note : "",
+      placeholder: L("কিসের জন্য (ইচ্ছা)", "what for (optional)") });
+
+    m.body.appendChild(cat);
+    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
+      [el("div", { class: "grow" }, [amt]), el("div", { class: "grow" }, [how])]));
+    m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [when]));
+    m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [note]));
+    if (kind === "personal") {
+      m.body.appendChild(el("div", { class: "tiny muted", style: { marginTop: "12px" } ,
+        text: L("এই টাকা দোকানের খরচ নয় — লাভ কমবে না, শুধু ক্যাশ কমবে।",
+                "Not a shop cost: it leaves the drawer but does not reduce profit.") }));
+    }
+
+    m.footer.appendChild(el("button", { class: "btn", text: T("Cancel"), onclick: m.close }));
+    if (row) {
+      m.footer.appendChild(el("button", { class: "btn btn-bad", text: T("Delete"),
+        onclick: function () {
+          A.confirm(T("Delete"), T("This cannot be undone."), { danger: true })
+            .then(function (y) {
+              if (!y) return;
+              A.eng.deleteExpense(row.id); m.close();
+              A.toast(T("Deleted"), "ok"); A.refresh();
+            });
+        } }));
+    }
+    m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Save"),
+      onclick: function () {
+        if (amt.num(0) <= 0) { A.toast(T("Enter an amount"), "warn"); return amt.input.focus(); }
+        A.eng.saveExpense({ id: row ? row.id : null, category: cat.val(),
+          amount: amt.num(0), method: how.val(), note: note.val(),
+          spent_on: when.val() || H.dayKey(), kind: kind,
+          user_id: A.user ? A.user.id : null });
+        m.close(); A.toast(T("Saved"), "ok"); A.refresh();
+      } }));
+  }
+
+  function staffDialog(row) {
+    const m = A.modal({ title: row ? row.name : L("নতুন কর্মচারী", "New staff") });
+    row = row || {};
+    const name = A.field(T("Name") + " *", { value: row.name || "" });
+    const phone = A.field(T("Phone"), { value: row.phone || "", inputmode: "tel",
+      placeholder: "01XXXXXXXXX" });
+    const role = A.field(L("কাজ", "Role"), { value: row.role || "",
+      placeholder: L("যেমন: দোকান সহকারী", "e.g. shop assistant") });
+    const salary = A.field(L("মাসিক বেতন", "Monthly salary"), { type: "number",
+      inputmode: "decimal", min: 0, value: row.salary || "", placeholder: T("amount"),
+      key: "staff-salary" });
+    const joined = A.field(L("কবে যোগ দিয়েছে", "Joined on"), { type: "date",
+      value: row.joined_on || H.dayKey() });
+    m.body.appendChild(name);
+    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
+      [el("div", { class: "grow" }, [phone]), el("div", { class: "grow" }, [role])]));
+    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
+      [el("div", { class: "grow" }, [salary]), el("div", { class: "grow" }, [joined])]));
+    m.footer.appendChild(el("button", { class: "btn", text: T("Cancel"), onclick: m.close }));
+    if (row.id) {
+      m.footer.appendChild(el("button", { class: "btn", text: L("কাজ ছেড়েছে", "Left the job"),
+        onclick: function () {
+          A.eng.saveStaff({ id: row.id, is_active: 0 });
+          m.close(); A.toast(T("Saved"), "ok"); A.refresh();
+        } }));
+    }
+    m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Save"),
+      onclick: function () {
+        if (!name.val()) return A.toast(T("Required"), "warn");
+        A.eng.saveStaff({ id: row.id, name: name.val(), phone: phone.val(),
+          role: role.val(), salary: salary.num(0), joined_on: joined.val() });
+        m.close(); A.toast(T("Saved"), "ok"); A.refresh();
+      } }));
+  }
+
+  function payDialog(info, month) {
+    const m = A.modal({ title: L("বেতন দিন", "Pay") + " · " + info.row.name });
+    m.body.appendChild(el("div", { class: "card card-pad spread",
+      style: { marginBottom: "12px" } }, [
+      el("span", { class: "muted", text: L("এ মাসে এখনো পাওনা", "Owed this month") }),
+      el("strong", { style: { fontSize: "1.2rem", color: "var(--warn)" },
+        text: A.money(info.left) }),
+    ]));
+    const amt = A.field(L("কত টাকা", "Amount"), { type: "number", inputmode: "decimal",
+      min: 0, value: info.left || "", key: "pay-amt" });
+    const what = A.field(L("কী হিসেবে", "As"), { type: "select", value: "salary",
+      options: [{ value: "salary", label: L("বেতন", "Salary") },
+                { value: "advance", label: L("আগাম", "Advance") }] });
+    const how = A.field(L("যেভাবে দিলেন", "Paid by"), { type: "select", value: "Cash",
+      options: METHODS });
+    const when = A.field(L("কোন তারিখে", "Date"), { type: "date", value: H.dayKey() });
+    const note = A.field(T("Note"), { value: "" });
+    m.body.appendChild(amt);
+    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
+      [el("div", { class: "grow" }, [what]), el("div", { class: "grow" }, [how])]));
+    m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [when]));
+    m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [note]));
+    m.footer.appendChild(el("button", { class: "btn", text: T("Cancel"), onclick: m.close }));
+    m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Save"),
+      onclick: function () {
+        if (amt.num(0) <= 0) { A.toast(T("Enter an amount"), "warn"); return amt.input.focus(); }
+        A.eng.payStaff({ staff_id: info.row.id, amount: amt.num(0),
+          pay_kind: what.val(), method: how.val(), note: note.val(),
+          paid_on: when.val() || H.dayKey(), for_month: month,
+          user_id: A.user ? A.user.id : null });
+        m.close(); A.toast(T("Saved"), "ok"); A.refresh();
+      } }));
+  }
+
+  function recurringDialog(row) {
+    const m = A.modal({ title: row ? row.label
+      : L("নিয়মিত খরচ যোগ করুন", "New regular cost") });
+    row = row || {};
+    const label = A.field(L("নাম", "Name") + " *", { value: row.label || "",
+      placeholder: L("যেমন: দোকান ভাড়া", "e.g. shop rent") });
+    const cats = catOptions(row.kind === "personal" ? "personal" : "shop");
+    const cat = A.field(T("Category"), { type: "select",
+      value: row.category || cats[0].value, options: cats });
+    const amt = A.field(L("কত টাকা", "Amount"), { type: "number", inputmode: "decimal",
+      min: 0, value: row.amount || "", placeholder: T("amount"), key: "rec-amt" });
+    const day = A.field(L("মাসের কত তারিখে", "Day of the month"), { type: "number",
+      inputmode: "numeric", min: 1, value: row.day_of_month || 1 });
+    const how = A.field(L("যেভাবে দেন", "Paid by"), { type: "select",
+      value: row.method || "Cash", options: METHODS });
+    const kind = A.field(L("কার খরচ", "Whose cost"), { type: "select",
+      value: row.kind || "shop",
+      options: [{ value: "shop", label: L("দোকানের", "Shop") },
+                { value: "personal", label: L("নিজের", "Personal") }] });
+    m.body.appendChild(label);
+    m.body.appendChild(el("div", { style: { marginTop: "10px" } }, [cat]));
+    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
+      [el("div", { class: "grow" }, [amt]), el("div", { class: "grow" }, [day])]));
+    m.body.appendChild(el("div", { class: "row", style: { marginTop: "10px" } },
+      [el("div", { class: "grow" }, [how]), el("div", { class: "grow" }, [kind])]));
+    m.body.appendChild(el("div", { class: "tiny muted", style: { marginTop: "12px" },
+      text: L("প্রতি মাসে নিজে থেকে বসবে না — মনে করিয়ে দিবে, আপনি এক চাপে বসাবেন।",
+              "It will not post itself — you will be reminded and post it with one tap.") }));
+    m.footer.appendChild(el("button", { class: "btn", text: T("Cancel"), onclick: m.close }));
+    if (row.id) {
+      m.footer.appendChild(el("button", { class: "btn btn-bad", text: T("Delete"),
+        onclick: function () {
+          A.eng.deleteRecurring(row.id); m.close();
+          A.toast(T("Deleted"), "ok"); A.refresh();
+        } }));
+    }
+    m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Save"),
+      onclick: function () {
+        if (!label.val()) return A.toast(T("Required"), "warn");
+        if (amt.num(0) <= 0) return A.toast(T("Enter an amount"), "warn");
+        A.eng.saveRecurring({ id: row.id, label: label.val(), category: cat.val(),
+          amount: amt.num(0), day_of_month: day.num(1), method: how.val(),
+          kind: kind.val() });
+        m.close(); A.toast(T("Saved"), "ok"); A.refresh();
+      } }));
+  }
+
+  /* ------------------------------------------------------- the screen */
+  A.register("expenses", function (page) {
+    const e = A.eng;
+    let tab = (A.params && A.params.tab) || "shop";
+    let month = (A.params && A.params.month) || H.dayKey().slice(0, 7);
+
+    const head = el("div", { class: "card card-pad repbar" });
+    const seg = el("div", { class: "seg" });
+    const TABS = [
+      ["shop", L("দোকানের খরচ", "Shop")],
+      ["regular", L("নিয়মিত", "Regular")],
+      ["staff", L("কর্মচারী", "Staff")],
+      ["personal", L("নিজের খরচ", "Personal")],
+    ];
+    TABS.forEach(function (t) {
+      seg.appendChild(el("button", { class: tab === t[0] ? "on" : "", text: t[1],
+        onclick: function () { tab = t[0]; draw(); } }));
+    });
+    head.appendChild(seg);
+
+    /* A month at a time is what a shopkeeper usually wants, but not
+       always — "কত গেল পুজোর সপ্তাহে" needs two dates.  Same control as
+       the reports screen, so it is learnt once. */
+    let custom = (A.params && A.params.custom) || null;   // {from,to} or null
+    const label = el("strong", { class: "lbl" });
+    const stepper = el("div", { class: "stepper" }, [
+      el("button", { class: "btn btn-sm btn-icon", text: "‹",
+        onclick: function () { month = shiftMonth(month, -1); draw(); } }),
+      label,
+      el("button", { class: "btn btn-sm btn-icon", text: "›",
+        onclick: function () { month = shiftMonth(month, 1); draw(); } }),
+    ]);
+    head.appendChild(stepper);
+    const modeBtn = el("button", { class: "btn btn-sm", onclick: function () {
+      if (custom) custom = null;
+      else {
+        const b = monthBounds(month);
+        custom = { from: b.start, to: H.dayKey() < b.end ? H.dayKey() : b.end };
+      }
+      draw();
+    } });
+    head.appendChild(modeBtn);
+    page.appendChild(head);
+
+    const fromF = A.field(L("থেকে", "From"), { type: "date", key: "exp-from" });
+    const toF = A.field(L("পর্যন্ত", "To"), { type: "date", key: "exp-to" });
+    fromF.input.addEventListener("change", function () {
+      if (custom) { custom.from = fromF.input.value || custom.from; draw(); } });
+    toF.input.addEventListener("change", function () {
+      if (custom) { custom.to = toF.input.value || custom.to; draw(); } });
+    function shortcut(text, days, whole) {
+      return el("button", { class: "btn btn-sm", text: text, onclick: function () {
+        const now = new Date();
+        if (whole === "month") {
+          custom = { from: H.dayKey(new Date(now.getFullYear(), now.getMonth(), 1)),
+                     to: H.dayKey(now) };
+        } else if (whole === "lastmonth") {
+          custom = { from: H.dayKey(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
+                     to: H.dayKey(new Date(now.getFullYear(), now.getMonth(), 0)) };
+        } else if (whole === "year") {
+          custom = { from: H.dayKey(new Date(now.getFullYear(), 0, 1)),
+                     to: H.dayKey(now) };
+        } else {
+          const back = new Date(now); back.setDate(back.getDate() - (days - 1));
+          custom = { from: H.dayKey(back), to: H.dayKey(now) };
+        }
+        draw();
+      } });
+    }
+    const picker = el("div", { class: "datepick" }, [
+      el("div", { class: "row", style: { gap: "10px" } }, [fromF, toF]),
+      el("div", { class: "row", style: { gap: "6px", marginTop: "10px" } }, [
+        shortcut(L("আজ", "Today"), 1),
+        shortcut(L("৭ দিন", "7 days"), 7),
+        shortcut(L("এ মাসে", "This month"), 0, "month"),
+        shortcut(L("গত মাস", "Last month"), 0, "lastmonth"),
+        shortcut(L("এ বছর", "This year"), 0, "year"),
+      ]),
+    ]);
+    page.appendChild(picker);
+
+    const body = el("div", { style: { marginTop: "var(--gap)" } });
+    page.appendChild(body);
+
+    function draw() {
+      /* Saving anything calls refresh(), which rebuilds the screen from
+         A.params — so the chosen tab and month live there, or every save
+         would dump the shopkeeper back on the first tab. */
+      A.params = A.params || {};
+      A.params.tab = tab; A.params.month = month; A.params.custom = custom;
+      A.$$(".seg button", head).forEach(function (b, i) {
+        b.className = TABS[i] && TABS[i][0] === tab ? "on" : "";
+      });
+
+      // wages and regular bills belong to a month, so those two books
+      // keep the stepper whatever the other tabs are doing
+      const byDate = !!custom && (tab === "shop" || tab === "personal");
+      picker.classList.toggle("hide", !byDate);
+      stepper.classList.toggle("hide", byDate);
+      modeBtn.textContent = byDate ? L("মাস ধরে", "By month")
+                                   : L("তারিখ ধরে", "Pick dates");
+      // className last would wipe the hide class, so set it first
+      modeBtn.className = "btn btn-sm" + (byDate ? " btn-pri" : "");
+      modeBtn.classList.toggle("hide", tab === "regular" || tab === "staff");
+      if (byDate) {
+        if (custom.from > custom.to) {
+          const t = custom.from; custom.from = custom.to; custom.to = t;
+        }
+        fromF.input.value = custom.from;
+        toF.input.value = custom.to;
+        label.textContent = A.dateText(custom.from) + " – " + A.dateText(custom.to);
+      } else {
+        label.textContent = monthName(month);
+      }
+      A.clear(body);
+      if (tab === "shop") drawSpend("shop");
+      else if (tab === "personal") drawSpend("personal");
+      else if (tab === "regular") drawRegular();
+      else drawStaff();
+    }
+
+    /* ---- one month of spending, this month against last ---- */
+    function drawSpend(kind) {
+      const byDate = !!custom;
+      const r = byDate ? { start: custom.from, end: custom.to } : monthBounds(month);
+      // the comparison is the same length of time, ending where this one starts
+      const prev = byDate ? previousSpan(r) : monthBounds(shiftMonth(month, -1));
+      const total = e.expenseTotal(r.start, r.end, kind);
+      const was = e.expenseTotal(prev.start, prev.end, kind);
+      const rows = e.expensesBetween(r.start, r.end, kind);
+      const byCat = e.expenseByCategory(r.start, r.end, kind);
+      const diff = Math.round((total - was) * 100) / 100;
+
+      body.appendChild(el("div", { class: "grid tiles3" }, [
+        el("div", { class: "tile tile-hero" }, [
+          el("div", { class: "k", text: kind === "personal"
+            ? (byDate ? L("এই সময়ে নিজে নিয়েছেন", "Taken in this span")
+                      : L("এ মাসে নিজে নিয়েছেন", "Taken this month"))
+            : (byDate ? L("এই সময়ের খরচ", "Spent in this span")
+                      : L("এ মাসের খরচ", "Spent this month")) }),
+          el("div", { class: "v", text: A.money(total) }),
+          el("div", { class: "s", text: (bn() ? root.bnDigits(String(rows.length)) : rows.length)
+            + L(" টি এন্ট্রি", " entries") }),
+        ]),
+        el("div", { class: "tile" }, [
+          el("div", { class: "k", text: byDate ? L("আগের সমান সময়ে", "Same span before")
+                                               : L("গত মাসে", "Last month") }),
+          el("div", { class: "v", text: A.money(was) }),
+          el("div", { class: "s " + (diff > 0 ? "bad-t" : diff < 0 ? "ok-t" : ""),
+            text: !was && !total ? ""
+              : (diff === 0 ? L("একই", "the same")
+                : (diff > 0 ? L("বেশি ", "up ") : L("কম ", "down "))
+                  + A.money(Math.abs(diff))) }),
+        ]),
+        el("div", { class: "tile" }, [
+          el("div", { class: "k", text: L("সবচেয়ে বেশি", "Biggest") }),
+          el("div", { class: "v", style: { fontSize: "1.15rem" },
+            text: byCat.length ? catLabel(byCat[0].category) : "—" }),
+          el("div", { class: "s", text: byCat.length ? A.money(byCat[0].total) : "" }),
+        ]),
+      ]));
+
+      const bar = el("div", { class: "toolbar", style: { marginTop: "var(--gap)" } }, [
+        el("div", { class: "grow" }),
+        el("button", { class: "btn btn-sm", text: "⬇ " + T("Excel"), onclick: function () {
+          A.xlsx(kind === "personal" ? L("নিজের খরচ", "Personal") : L("দোকানের খরচ", "Shop"),
+            [[T("Date"), T("Category"), T("Method"), T("Note"), T("Amount")]]
+            .concat(rows.map(function (x) {
+              return [x.spent_on, catLabel(x.category), x.method, x.note, x.amount]; })),
+            "expenses-" + kind + "-" + (byDate ? r.start + "_" + r.end : month));
+        } }),
+        el("button", { class: "btn btn-sm btn-pri",
+          text: "＋ " + (kind === "personal" ? L("নিজের খরচ", "Personal")
+                                             : L("খরচ যোগ", "Add expense")),
+          onclick: function () { expenseDialog({ kind: kind }); } }),
+      ]);
+      body.appendChild(bar);
+
+      if (kind === "personal") {
+        body.appendChild(el("div", { class: "card card-pad note-soft",
+          style: { marginTop: "var(--gap)" } }, [
+          el("strong", { text: L("এটা দোকানের খরচ নয়", "This is not a shop cost") }),
+          el("div", { class: "small muted", style: { marginTop: "4px" },
+            text: L("ঘরের বাজার, হাত খরচ — এগুলো লাভ থেকে বাদ যায় না। লাভ যা হয়েছে তাই থাকে, শুধু ক্যাশ কমে। তাই আলাদা রাখা।",
+                    "Household and pocket money do not reduce the shop's profit. They only take cash out, so they are kept apart.") }),
+        ]));
+      }
+
+      if (byCat.length > 1) {
+        const peak = byCat[0].total || 1;
+        body.appendChild(el("div", { class: "card card-pad", style: { marginTop: "var(--gap)" } },
+          [el("h3", { class: "sec", text: L("কোন খাতে কত", "Where it went") })].concat(
+            byCat.map(function (c) {
+              return el("div", { class: "rankrow", style: { marginBottom: "10px" } }, [
+                el("span", { class: "grow" }, [
+                  el("div", { class: "spread small" }, [
+                    el("span", { class: "grow nowrap", style: { overflow: "hidden",
+                      textOverflow: "ellipsis", fontWeight: "600" },
+                      text: catLabel(c.category) }),
+                    el("span", { class: "muted nowrap", text: A.money(c.total) }),
+                  ]),
+                  el("div", { class: "bar", style: { marginTop: "5px" } },
+                    [el("i", { style: { width: Math.max((c.total / peak) * 100, 3) + "%" } })]),
+                ]),
+              ]);
+            }))));
+      }
+
+      const card = el("div", { class: "card", style: { marginTop: "var(--gap)" } });
+      if (!rows.length) {
+        card.appendChild(el("div", { class: "empty" }, [
+          el("div", { class: "big", text: "🧾" }),
+          el("div", { text: byDate
+            ? L("এই সময়ে কিছু লেখা হয়নি", "Nothing recorded in this span")
+            : L("এ মাসে কিছু লেখা হয়নি", "Nothing recorded this month") }),
+        ]));
+      } else {
+        const tbl = el("table", { class: "tbl tbl-cards" });
+        tbl.appendChild(el("thead", {}, [el("tr", {}, [
+          el("th", { text: T("Date") }), el("th", { text: T("Category") }),
+          el("th", { class: "fit", text: T("Method") }),
+          el("th", { class: "fit right", text: T("Amount") }),
+        ])]));
+        const tb = el("tbody");
+        rows.forEach(function (x) {
+          const who = x.staff_id ? e.staffMember(x.staff_id) : null;
+          tb.appendChild(el("tr", { class: "tap", onclick: function () {
+            expenseDialog({ kind: x.kind || "shop", row: x }); } }, [
+            el("td", { class: "fit nowrap small muted c-hide-phone",
+              text: A.dateText(x.spent_on) }),
+            el("td", { class: "c-name" }, [
+              el("div", { style: { fontWeight: "700" }, text: catLabel(x.category) }),
+              el("div", { class: "tiny faint", text: [A.dateText(x.spent_on),
+                who ? who.name : "", x.note].filter(Boolean).join(" · ") }),
+            ]),
+            el("td", { class: "fit c-stock" },
+              [el("span", { class: "chip", text: x.method || "Cash" })]),
+            el("td", { class: "fit right c-price", style: { fontWeight: "700" },
+              text: A.money(x.amount) }),
+          ]));
+        });
+        tbl.appendChild(tb);
+        card.appendChild(el("div", { class: "scroll-x" }, [tbl]));
+      }
+      body.appendChild(card);
+    }
+
+    /* ---- the bills that repeat ---- */
+    function drawRegular() {
+      const pending = e.recurringPending(month);
+      const all = e.recurringList();
+      const monthly = all.reduce(function (s, r) { return s + Number(r.amount || 0); }, 0);
+
+      body.appendChild(el("div", { class: "grid tiles3" }, [
+        el("div", { class: "tile tile-hero" }, [
+          el("div", { class: "k", text: L("প্রতি মাসে বাঁধা খরচ", "Fixed every month") }),
+          el("div", { class: "v", text: A.money(monthly) }),
+          el("div", { class: "s", text: (bn() ? root.bnDigits(String(all.length)) : all.length)
+            + L(" টি", " items") }),
+        ]),
+        el("div", { class: "tile" }, [
+          el("div", { class: "k", text: L("এ মাসে বাকি", "Still to post") }),
+          el("div", { class: "v " + (pending.length ? "warn-t" : "ok-t"),
+            text: bn() ? root.bnDigits(String(pending.length)) : String(pending.length) }),
+        ]),
+      ]));
+
+      body.appendChild(el("div", { class: "toolbar", style: { marginTop: "var(--gap)" } }, [
+        el("div", { class: "grow" }),
+        el("button", { class: "btn btn-sm btn-pri",
+          text: "＋ " + L("নিয়মিত খরচ যোগ", "Add a regular cost"),
+          onclick: function () { recurringDialog(null); } }),
+      ]));
+
+      if (pending.length) {
+        const box = el("div", { class: "card", style: { marginTop: "var(--gap)" } }, [
+          el("div", { class: "card-pad spread", style: { paddingBottom: "0" } }, [
+            el("h3", { class: "sec", style: { marginBottom: "0" },
+              text: L("এখনো দেওয়া হয়নি", "Not posted yet") }),
+            el("button", { class: "btn btn-sm", text: L("সব বসান", "Post all"),
+              onclick: function () {
+                A.confirm(L("সব বসাবো?", "Post all?"),
+                  L("এ মাসের বাকি সবগুলো খরচ একসাথে বসে যাবে।",
+                    "Every pending item for this month will be recorded.")).then(function (y) {
+                  if (!y) return;
+                  pending.forEach(function (p) { e.runRecurring(p.row.id, { month: month }); });
+                  A.toast(T("Saved"), "ok"); A.refresh();
+                });
+              } }),
+          ]),
+        ]);
+        const list = el("div", { class: "duelist" });
+        pending.forEach(function (p) {
+          list.appendChild(el("div", { class: "duerow", style: { cursor: "default" } }, [
+            el("span", { class: "avatar sm",
+              text: (p.row.label || "?").trim().charAt(0) }),
+            el("span", { class: "grow" }, [
+              el("span", { class: "duerow-name", text: p.row.label }),
+              el("span", { class: "tiny faint", text: catLabel(p.row.category)
+                + " · " + L("প্রতি মাসের ", "on the ")
+                + (bn() ? root.bnDigits(String(p.row.day_of_month)) : p.row.day_of_month)
+                + L(" তারিখ", "") }),
+            ]),
+            p.overdue ? el("span", { class: "chip chip-warn",
+              text: L("সময় হয়েছে", "due") }) : null,
+            el("span", { class: "duerow-amt", style: { color: "var(--text)" },
+              text: A.money(p.row.amount) }),
+            el("button", { class: "btn btn-sm btn-pri", text: L("বসান", "Post"),
+              onclick: function () {
+                e.runRecurring(p.row.id, { month: month });
+                A.toast(T("Saved"), "ok"); A.refresh();
+              } }),
+          ]));
+        });
+        box.appendChild(list);
+        body.appendChild(box);
+      }
+
+      const card = el("div", { class: "card", style: { marginTop: "var(--gap)" } });
+      card.appendChild(el("div", { class: "card-pad", style: { paddingBottom: "0" } },
+        [el("h3", { class: "sec", style: { marginBottom: "0" },
+          text: L("সব নিয়মিত খরচ", "All regular costs") })]));
+      if (!all.length) {
+        card.appendChild(el("div", { class: "empty" }, [
+          el("div", { class: "big", text: "🧾" }),
+          el("div", { text: L("ভাড়া, বেতন, বিদ্যুৎ — একবার বসিয়ে রাখুন",
+                              "Set rent, wages and bills once") }),
+        ]));
+      } else {
+        const list = el("div", { class: "duelist" });
+        all.forEach(function (r) {
+          const done = (r.last_done || "") === month;
+          list.appendChild(el("button", { class: "duerow",
+            onclick: function () { recurringDialog(r); } }, [
+            el("span", { class: "avatar sm", text: (r.label || "?").trim().charAt(0) }),
+            el("span", { class: "grow" }, [
+              el("span", { class: "duerow-name", text: r.label }),
+              el("span", { class: "tiny faint", text: catLabel(r.category) + " · "
+                + (r.kind === "personal" ? L("নিজের", "personal") : L("দোকানের", "shop")) }),
+            ]),
+            done ? el("span", { class: "chip chip-ok", text: L("দেওয়া হয়েছে", "posted") }) : null,
+            el("span", { class: "duerow-amt", style: { color: "var(--text)" },
+              text: A.money(r.amount) }),
+            el("span", { class: "duerow-go" }, [A.icon("right")]),
+          ]));
+        });
+        card.appendChild(list);
+      }
+      body.appendChild(card);
+    }
+
+    /* ---- who is owed what ---- */
+    function drawStaff() {
+      const list = e.staffMonthAll(month);
+      const wage = list.reduce(function (s, x) { return s + x.salary_due; }, 0);
+      const paid = list.reduce(function (s, x) { return s + x.paid; }, 0);
+      const left = list.reduce(function (s, x) { return s + x.left; }, 0);
+
+      body.appendChild(el("div", { class: "grid tiles3" }, [
+        el("div", { class: "tile tile-hero" }, [
+          el("div", { class: "k", text: L("এ মাসের মোট বেতন", "Wage bill") }),
+          el("div", { class: "v", text: A.money(wage) }),
+          el("div", { class: "s", text: (bn() ? root.bnDigits(String(list.length)) : list.length)
+            + L(" জন", " people") }),
+        ]),
+        el("div", { class: "tile" }, [
+          el("div", { class: "k", text: L("দেওয়া হয়েছে", "Paid") }),
+          el("div", { class: "v ok-t", text: A.money(paid) }),
+        ]),
+        el("div", { class: "tile" }, [
+          el("div", { class: "k", text: L("এখনো পাওনা", "Still owed") }),
+          el("div", { class: "v " + (left > 0 ? "warn-t" : "ok-t"), text: A.money(left) }),
+        ]),
+      ]));
+
+      body.appendChild(el("div", { class: "toolbar", style: { marginTop: "var(--gap)" } }, [
+        el("div", { class: "grow" }),
+        el("button", { class: "btn btn-sm", text: "⬇ " + T("Excel"), onclick: function () {
+          A.xlsx(L("কর্মচারী", "Staff"),
+            [[T("Name"), L("কাজ", "Role"), T("Phone"), L("মাসিক বেতন", "Salary"),
+              L("দেওয়া হয়েছে", "Paid"), L("আগাম", "Advance"), L("বাকি", "Left")]]
+            .concat(list.map(function (x) {
+              return [x.row.name, x.row.role, x.row.phone, x.salary_due,
+                      x.paid_salary, x.paid_advance, x.left]; })), "staff-" + month);
+        } }),
+        el("button", { class: "btn btn-sm btn-pri", text: "＋ " + L("কর্মচারী", "Staff"),
+          onclick: function () { staffDialog(null); } }),
+      ]));
+
+      if (!list.length) {
+        body.appendChild(el("div", { class: "card card-pad empty",
+          style: { marginTop: "var(--gap)" } }, [
+          el("div", { class: "big", text: "👥" }),
+          el("div", { text: L("কোনো কর্মচারী যোগ করা হয়নি", "No staff yet") }),
+        ]));
+        return;
+      }
+
+      const wrap = el("div", { class: "stack", style: { marginTop: "var(--gap)" } });
+      list.forEach(function (info) {
+        const pct = info.salary_due > 0
+          ? Math.min(info.paid / info.salary_due, 1) * 100 : (info.paid > 0 ? 100 : 0);
+        const led = e.staffLedger(info.row.id, 4).filter(function (x) {
+          return (x.for_month || String(x.spent_on).slice(0, 7)) === month;
+        });
+        wrap.appendChild(el("div", { class: "card duecard" }, [
+          el("div", { class: "duecard-head" }, [
+            el("div", { class: "avatar", text: (info.row.name || "?").trim().charAt(0) }),
+            el("div", { class: "grow" }, [
+              el("div", { class: "duecard-name", text: info.row.name }),
+              el("div", { class: "small muted",
+                text: [info.row.role, info.row.phone].filter(Boolean).join(" · ")
+                  || L("বেতন বসানো হয়নি", "no salary set") }),
+            ]),
+            el("div", { class: "right" }, [
+              el("div", { class: "tiny faint up", text: L("পাওনা", "Owed") }),
+              el("div", { class: "duecard-amt",
+                style: { color: info.left > 0 ? "var(--warn)" : "var(--ok)" },
+                text: A.money(info.left) }),
+            ]),
+          ]),
+          el("div", { class: "duecard-body" }, [
+            el("div", { class: "spread small muted" }, [
+              el("span", { text: L("মাসিক বেতন ", "Salary ") + A.money(info.salary_due) }),
+              el("span", { text: L("দেওয়া ", "paid ") + A.money(info.paid) }),
+            ]),
+            el("div", { class: "bar", style: { marginTop: "6px" } },
+              [el("i", { style: { width: pct + "%",
+                background: pct >= 100 ? "var(--ok)" : null } })]),
+            info.paid_advance ? el("div", { class: "tiny faint", style: { marginTop: "6px" },
+              text: L("এর মধ্যে আগাম ", "of which advance ")
+                + A.money(info.paid_advance) }) : null,
+            el("div", { class: "row", style: { marginTop: "14px", gap: "8px" } }, [
+              el("button", { class: "btn btn-pri btn-sm", text: "＋ " + L("বেতন দিন", "Pay"),
+                onclick: function () { payDialog(info, month); } }),
+              el("button", { class: "btn btn-sm", text: "✎ " + L("তথ্য", "Details"),
+                onclick: function () { staffDialog(info.row); } }),
+              info.row.phone ? el("a", { class: "btn btn-sm",
+                href: "tel:" + String(info.row.phone).replace(/[^\d+]/g, ""),
+                text: "☎ " + L("কল", "Call") }) : null,
+            ]),
+            led.length ? el("div", { class: "stack", style: { gap: "4px",
+              marginTop: "12px" } }, led.map(function (x) {
+                return el("div", { class: "spread tiny faint" }, [
+                  el("span", { text: A.dateText(x.spent_on) + " · "
+                    + (x.pay_kind === "advance" ? L("আগাম", "advance") : L("বেতন", "salary"))
+                    + " · " + (x.method || "Cash") }),
+                  el("span", { text: A.money(x.amount) }),
+                ]);
+              })) : null,
+          ]),
+        ]));
+      });
+      body.appendChild(wrap);
+    }
+
+    draw();
+  });
+})(window);
+</script>
+<script>
+/* =================================================================
    Barcode labels — a printable sheet the shop can stick on shelves.
 
    Code 39 is drawn as an inline SVG rather than fetched as a font,
@@ -5607,6 +6849,11 @@ window.SHOP = {
       segRow("Bengali numbers on receipts", [{ value: "0", label: T("No") },
         { value: "1", label: T("Yes") }], String(e.setting("receipt_bn_digits", "0")),
         function (v) { e.setSetting("receipt_bn_digits", v); A.refresh(); }),
+      segRow("Memo style", [{ value: "slip", label: root.isBn() ? "ছোট স্লিপ" : "Slip" },
+        { value: "a4", label: root.isBn() ? "A4 পাতা" : "A4 page" }],
+        e.setting("memo_style", "slip"), function (v) {
+          e.setSetting("memo_style", v); A.refresh();
+        }),
       segRow("Print", [{ value: "0", label: root.isBn() ? "হাতে" : "Manual" },
         { value: "1", label: root.isBn() ? "নিজে থেকে" : "Automatic" }],
         String(e.setting("auto_print", "0")), function (v) {
@@ -5682,6 +6929,7 @@ window.SHOP = {
       const mb = function (n) { return (n / 1048576).toFixed(1) + " MB"; };
       quota.textContent = T("Storage used") + ": " + mb(q.used) + " / " + mb(q.total);
     });
+    const folder = e.setting("backup_folder", "");
     page.appendChild(group("Backup", [
       el("div", { class: "small muted", text: root.isBn()
         ? "ব্রাউজারের ভিতরের হিসাব ক্যাশ ক্লিয়ার করলে বা ব্রাউজার বদলালে মুছে যেতে পারে। সপ্তাহে একবার ব্যাকআপ নামিয়ে নিজের WhatsApp-এ পাঠিয়ে রাখুন।"
@@ -5692,9 +6940,36 @@ window.SHOP = {
       el("div", { class: "row" }, [
         el("button", { class: "btn btn-pri grow", text: "⬇ " + T("Save backup"),
           onclick: A.saveBackup }),
+        el("button", { class: "btn btn-ok grow",
+          text: "⇧ " + (root.isBn() ? "ব্যাকআপ পাঠান" : "Send backup"),
+          onclick: A.shareBackup }),
         el("button", { class: "btn grow", text: "⬆ " + T("Restore backup"),
           onclick: A.restoreBackup }),
       ]),
+      el("div", { class: "tiny faint", text: root.isBn()
+        ? "\u201cপাঠান\u201d চাপলে ফোনের শেয়ার তালিকা আসবে — Google Drive, WhatsApp, Gmail, যেটা সুবিধা।"
+        : "\u201cSend\u201d opens the phone's share sheet — Drive, WhatsApp, Gmail." }),
+      /* On a computer a folder can be chosen once and written to every
+         time.  Put that folder inside Google Drive or OneDrive and the
+         backup reaches the cloud without anyone signing into anything. */
+      A.backupFolderSupported() ? el("div", { class: "field",
+        style: { marginTop: "14px" } }, [
+        el("label", { text: root.isBn() ? "ব্যাকআপ রাখার ফোল্ডার" : "Backup folder" }),
+        folder
+          ? el("div", { class: "row" }, [
+              el("span", { class: "chip chip-ok", text: "📁 " + folder }),
+              el("button", { class: "btn btn-sm", text: root.isBn() ? "বদলান" : "Change",
+                onclick: function () { A.pickBackupFolder(); } }),
+              el("button", { class: "btn btn-sm", text: root.isBn() ? "সরান" : "Remove",
+                onclick: function () { A.forgetBackupFolder(); } }),
+            ])
+          : el("button", { class: "btn", text: "📁 " + (root.isBn()
+              ? "ফোল্ডার বেছে দিন" : "Choose a folder"),
+              onclick: function () { A.pickBackupFolder(); } }),
+        el("div", { class: "tiny faint", text: root.isBn()
+          ? "Google Drive বা OneDrive-এর ভিতরের একটা ফোল্ডার বাছলে ব্যাকআপ নিজে থেকেই ক্লাউডে চলে যাবে।"
+          : "Pick a folder inside Google Drive or OneDrive and every backup syncs by itself." }),
+      ]) : null,
       quota,
     ]));
 
@@ -5788,20 +7063,38 @@ window.SHOP = {
       const qty = (Math.round(it.qty * 1000) / 1000) + " " + (it.unit || "");
       L.push(two("  " + qty + " x " + n(it.price), n(it.line_total), w));
     });
-    L.push(rule("-", w));
-    L.push(two("Subtotal", n(sale.subtotal), w));
-    if (Number(sale.discount_amt)) L.push(two("Discount", "-" + n(sale.discount_amt), w));
-    if (Number(sale.tax_amt)) L.push(two("Tax (" + sale.tax_percent + "%)", n(sale.tax_amt), w));
-    if (Number(sale.delivery_charge)) L.push(two("Delivery", n(sale.delivery_charge), w));
-    L.push(rule("=", w));
-    L.push(two("TOTAL", sym + n(sale.grand_total), w));
-    if (Number(sale.paid_cash)) L.push(two("Cash", n(sale.paid_cash), w));
-    if (Number(sale.paid_mobile)) {
-      L.push(two(sale.mobile_method || "Mobile", n(sale.paid_mobile), w));
-      if (sale.trx_id) L.push(two("TrxID", sale.trx_id, w));
+    /* The total is what the customer looks for, so nothing shares a line
+       with it: rules above and below, and the workings only printed when
+       there actually are any.  Subtotal on its own, equal to the total,
+       is noise on a memo. */
+    const adjusted = Number(sale.discount_amt) || Number(sale.tax_amt)
+                   || Number(sale.delivery_charge);
+    if (adjusted) {
+      L.push(rule("-", w));
+      L.push(two("Subtotal", n(sale.subtotal), w));
+      if (Number(sale.discount_amt)) L.push(two("Discount", "-" + n(sale.discount_amt), w));
+      if (Number(sale.tax_amt)) L.push(two("Tax (" + sale.tax_percent + "%)", n(sale.tax_amt), w));
+      if (Number(sale.delivery_charge)) L.push(two("Delivery", n(sale.delivery_charge), w));
     }
-    if (Number(sale.change_due)) L.push(two("Change", n(sale.change_due), w));
-    if (Number(sale.due)) L.push(two("DUE", n(sale.due), w));
+    L.push(rule("=", w));
+    L.push(two("TOTAL", sym + " " + n(sale.grand_total), w));
+    L.push(rule("=", w));
+
+    const paidLines = [];
+    if (Number(sale.paid_cash)) paidLines.push(two("  Cash", n(sale.paid_cash), w));
+    if (Number(sale.paid_mobile)) {
+      paidLines.push(two("  " + (sale.mobile_method || "Mobile"), n(sale.paid_mobile), w));
+      if (sale.trx_id) paidLines.push(two("  TrxID", sale.trx_id, w));
+    }
+    if (paidLines.length) {
+      L.push("Paid by");
+      paidLines.forEach(function (x) { L.push(x); });
+    }
+    if (Number(sale.change_due)) L.push(two("Change returned", n(sale.change_due), w));
+    if (Number(sale.due)) {
+      L.push(rule("-", w));
+      L.push(two("DUE", sym + " " + n(sale.due), w));
+    }
     L.push(rule("-", w));
     const foot = A.eng.setting("receipt_footer", root.isBn()
       ? "ধন্যবাদ, আবার আসবেন" : "Thank you, please come again");
@@ -5932,13 +7225,314 @@ window.SHOP = {
     m.body.appendChild(el("div", { class: "slip", text: A.receiptText(sale, items) }));
     m.footer.appendChild(el("button", { class: "btn", text: "🖨 " + T("Print receipt"),
       onclick: function () { A.printReceipt(sale, items); } }));
+    m.footer.appendChild(el("button", { class: "btn",
+      text: "📄 " + (root.isBn() ? "A4 মেমো" : "A4 memo"),
+      onclick: function () { A.showInvoice && A.showInvoice(sale, items); } }));
     m.footer.appendChild(el("button", { class: "btn btn-ok", text: "🟢 " + T("Send on WhatsApp"),
       onclick: function () { A.shareReceipt(sale, items); } }));
     m.footer.appendChild(el("button", { class: "btn btn-pri", text: T("Next sale") + " ▸",
       onclick: function () { m.close(); } }));
     if (A.eng.setting("auto_print", "0") === "1") {
-      setTimeout(function () { A.printReceipt(sale, items); }, 200);
+      setTimeout(function () {
+        if (A.eng.setting("memo_style", "slip") === "a4" && A.printInvoice) {
+          A.printInvoice(sale, items);
+        } else A.printReceipt(sale, items);
+      }, 200);
     }
+  };
+})(window);
+</script>
+<script>
+/* =================================================================
+   A4 মেমো — the paper memo a shop hands over or files away.
+
+   The thermal slip is for the counter: narrow, fast, disposable.  This
+   is the other memo a Bangladeshi shop needs — the one on a full sheet
+   with the shop's name at the top, a proper item table and a signature
+   line, for a wholesale customer, a company account or the shop's own
+   file copy.  It prints from any ordinary printer.
+
+   Both are built from the same sale, so a bill can be printed either
+   way, or both, without being re-entered.
+   ================================================================= */
+(function (root) {
+  "use strict";
+  const A = root.App, el = A.el, T = root.T;
+
+  const bn = function () { return root.isBn(); };
+  const L = function (b, e) { return bn() ? b : e; };
+
+  /** Money for paper: grouped, no decimals when they are all zeros —
+   *  a shop memo says 3,000 Tk, not 3,000.00. */
+  function money(v, opts) {
+    const n = Math.round((Number(v) || 0) * 100) / 100;
+    const whole = Math.abs(n % 1) < 0.005;
+    const txt = n.toLocaleString("en-US", {
+      minimumFractionDigits: whole ? 0 : 2,
+      maximumFractionDigits: 2,
+    });
+    if (!(opts && opts.sym)) return bn() ? root.bnDigits(txt) : txt;
+    // "৫,০৫০ Tk" reads like two languages arguing; on a Bengali memo the
+    // word is টাকা.
+    return bn() ? root.bnDigits(txt) + " টাকা" : txt + " " + A.symAscii();
+  }
+
+  function dateLine(s) {
+    return A.dateText(s) + (A.timeText(s) ? ", " + A.timeText(s) : "");
+  }
+
+  /* --------------------------------------------------------- build */
+  A.invoiceNode = function (sale, items) {
+    const e = A.eng;
+    const shop = A.shopName();
+    const phone = e.setting("business_phone", root.SHOP.phone);
+    const addr = e.setting("business_address", root.SHOP.address);
+    const due = Number(sale.due) || 0;
+    const paid = Number(sale.paid_cash) + Number(sale.paid_mobile);
+    const status = due > 0.005
+      ? (paid > 0.005 ? L("আংশিক", "PARTIAL") : L("বাকি", "DUE"))
+      : L("পরিশোধিত", "PAID");
+    const statusTone = due > 0.005 ? (paid > 0.005 ? "warn" : "bad") : "ok";
+    const isReturn = sale.kind === "return";
+
+    const sheet = el("div", { class: "inv" });
+
+    /* ---- masthead ---- */
+    sheet.appendChild(el("div", { class: "inv-top" }, [
+      el("div", { class: "inv-brand" }, [
+        el("div", { class: "inv-mark", text: (shop || "?").trim().charAt(0) }),
+        el("div", {}, [
+          el("div", { class: "inv-shop", text: shop }),
+          addr ? el("div", { class: "inv-meta", text: addr }) : null,
+          phone ? el("div", { class: "inv-meta",
+            text: L("মোবাইল: ", "Phone: ") + phone }) : null,
+        ]),
+      ]),
+      el("div", { class: "inv-stamp " + statusTone }, [
+        el("div", { class: "inv-stamp-t", text: status }),
+        paid > 0.005 ? el("div", { class: "inv-stamp-s",
+          text: L("মাধ্যম: ", "via ") + (sale.payment_method || "Cash") }) : null,
+      ]),
+    ]));
+    sheet.appendChild(el("div", { class: "inv-rule" }));
+
+    sheet.appendChild(el("h2", { class: "inv-title",
+      text: isReturn ? L("ফেরত মেমো", "RETURN MEMO") : L("ক্যাশ মেমো", "CASH MEMO") }));
+
+    /* ---- who and which ---- */
+    const walkIn = !sale.customer_name || sale.customer_name === T("Walk-in")
+                || sale.customer_name === "Walk-in";
+    sheet.appendChild(el("div", { class: "inv-parties" }, [
+      el("div", {}, [
+        el("div", { class: "inv-lbl", text: L("যাকে দেওয়া হলো", "BILL TO") }),
+        el("div", { class: "inv-cust",
+          text: walkIn ? L("সাধারণ কাস্টমার", "Walk-in customer") : sale.customer_name }),
+        sale.customer_phone
+          ? el("div", { class: "inv-meta", text: sale.customer_phone }) : null,
+        (function () {
+          const c = sale.customer_id ? e.customer(sale.customer_id) : null;
+          return c && c.address ? el("div", { class: "inv-meta", text: c.address }) : null;
+        })(),
+      ]),
+      el("div", { class: "right" }, [
+        el("div", { class: "inv-lbl", text: L("মেমোর বিবরণ", "MEMO DETAILS") }),
+        el("div", { class: "inv-no", text: sale.invoice_no }),
+        el("div", { class: "inv-meta", text: dateLine(sale.created_at) }),
+        el("div", { class: "inv-meta",
+          text: L("অবস্থা: ", "Status: ") + status }),
+      ]),
+    ]));
+
+    /* ---- the goods ---- */
+    const tb = el("tbody");
+    (items || []).forEach(function (it, i) {
+      tb.appendChild(el("tr", {}, [
+        el("td", { class: "sl", text: bn() ? root.bnDigits(String(i + 1)) : String(i + 1) }),
+        el("td", {}, [
+          el("div", { class: "inv-item", text: it.name }),
+          it.unit ? el("div", { class: "inv-meta", text: it.unit }) : null,
+        ]),
+        el("td", { class: "right", text: A.qty(it.qty) }),
+        el("td", { class: "right", text: money(it.price) }),
+        el("td", { class: "right strong", text: money(it.line_total) }),
+      ]));
+    });
+    sheet.appendChild(el("table", { class: "inv-tbl" }, [
+      el("thead", {}, [el("tr", {}, [
+        el("th", { class: "sl", text: L("ক্রম", "SL") }),
+        el("th", { text: L("পণ্যের বিবরণ", "Item description") }),
+        el("th", { class: "right", text: L("পরিমাণ", "Qty") }),
+        el("th", { class: "right", text: L("দর", "Rate") }),
+        el("th", { class: "right", text: L("টাকা", "Amount") }),
+      ])]),
+      tb,
+    ]));
+
+    /* ---- the arithmetic ---- */
+    const rows = [];
+    const add = function (label, value, cls) {
+      rows.push(el("div", { class: "inv-sum-r " + (cls || "") }, [
+        el("span", { text: label }),
+        el("span", { class: "num", text: value }),
+      ]));
+    };
+    add(L("উপমোট", "Subtotal"), money(sale.subtotal));
+    if (Number(sale.discount_amt)) add(L("ছাড়", "Discount"), "− " + money(sale.discount_amt));
+    if (Number(sale.tax_amt)) {
+      add(L("ট্যাক্স", "VAT") + " (" + (bn() ? root.bnDigits(String(sale.tax_percent))
+        : sale.tax_percent) + "%)", money(sale.tax_amt));
+    }
+    if (Number(sale.delivery_charge)) {
+      add(L("ডেলিভারি", "Delivery"), money(sale.delivery_charge));
+    }
+    rows.push(el("div", { class: "inv-sum-r total" }, [
+      el("span", { text: L("সর্বমোট", "Total") }),
+      el("span", { class: "num", text: money(sale.grand_total, { sym: true }) }),
+    ]));
+    if (Number(sale.paid_cash)) add(L("ক্যাশ", "Cash"), money(sale.paid_cash), "pay");
+    if (Number(sale.paid_mobile)) {
+      add(sale.mobile_method || L("মোবাইল", "Mobile"), money(sale.paid_mobile), "pay");
+    }
+    if (Number(sale.change_due)) add(L("ফেরত", "Change"), money(sale.change_due), "pay");
+    if (due > 0.005) {
+      rows.push(el("div", { class: "inv-sum-r due" }, [
+        el("span", { text: L("বাকি রইল", "Balance due") }),
+        el("span", { class: "num", text: money(due, { sym: true }) }),
+      ]));
+    }
+
+    sheet.appendChild(el("div", { class: "inv-foot" }, [
+      el("div", { class: "inv-words" }, [
+        sale.trx_id ? el("div", { class: "inv-meta",
+          text: "TrxID: " + sale.trx_id }) : null,
+        sale.note ? el("div", { class: "inv-meta", text: sale.note }) : null,
+      ]),
+      el("div", { class: "inv-sum" }, rows),
+    ]));
+
+    sheet.appendChild(el("div", { class: "inv-sign" }, [
+      el("div", { class: "inv-sign-b" }, [
+        el("div", { class: "inv-line" }),
+        el("div", { class: "inv-meta", text: L("কাস্টমারের স্বাক্ষর", "Customer signature") }),
+      ]),
+      el("div", { class: "inv-sign-b right" }, [
+        el("div", { class: "inv-line" }),
+        el("div", { class: "inv-meta", text: L("দোকানের পক্ষে", "For " + shop) }),
+      ]),
+    ]));
+
+    const foot = e.setting("receipt_footer", L("ধন্যবাদ, আবার আসবেন",
+      "Thank you, please come again"));
+    sheet.appendChild(el("div", { class: "inv-note" }, [
+      el("div", { text: foot }),
+      el("div", { class: "inv-meta", text: L(
+        "সব টাকার অঙ্ক বাংলাদেশি টাকায়। এটি কম্পিউটারে তৈরি মেমো।",
+        "All amounts in Bangladeshi Taka. This is a computer-generated memo.") }),
+    ]));
+
+    return sheet;
+  };
+
+  /* --------------------------------------------------------- print */
+  const SHEET_CSS = [
+    '@page{size:A4;margin:12mm}',
+    '*{box-sizing:border-box}',
+    'body{margin:0;color:#101a17;background:#fff;',
+    'font-family:"POS Bangla","Hind Siliguri","Noto Sans Bengali",system-ui,',
+    '-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:10.5pt;line-height:1.5}',
+    '.inv{width:100%}',
+    '.inv-top{display:flex;gap:16px;align-items:flex-start;justify-content:space-between}',
+    '.inv-brand{display:flex;gap:12px;align-items:flex-start;min-width:0}',
+    '.inv-mark{width:46px;height:46px;flex:0 0 46px;border-radius:12px;display:flex;',
+    'align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20pt;',
+    'background:var(--ink)}',
+    '.inv-shop{font-size:17pt;font-weight:800;line-height:1.2;letter-spacing:-.01em}',
+    '.inv-meta{font-size:8.6pt;color:#5d6b67;line-height:1.45}',
+    '.inv-stamp{border:2px solid var(--stamp);border-radius:8px;padding:6px 16px;',
+    'text-align:center;flex:0 0 auto}',
+    '.inv-stamp-t{color:var(--stamp);font-weight:800;font-size:13pt}',
+    '.inv-stamp-s{color:var(--stamp);font-size:8pt;margin-top:2px}',
+    '.inv-rule{height:3px;background:var(--ink);margin:12px 0 0;border-radius:2px}',
+    '.inv-title{text-align:center;color:var(--ink);font-size:14pt;',
+    'margin:16px 0 18px;font-weight:800}',
+    '.inv-parties{display:flex;gap:20px;justify-content:space-between;margin-bottom:18px}',
+    '.inv-lbl{font-size:8.4pt;font-weight:800;color:var(--ink);',
+    'margin-bottom:4px}',
+    '.inv-cust{font-size:12pt;font-weight:800}',
+    '.inv-no{font-size:12pt;font-weight:800}',
+    '.right{text-align:right}',
+    '.inv-tbl{width:100%;border-collapse:collapse}',
+    '.inv-tbl th{font-size:8.4pt;font-weight:700;color:#5d6b67;text-align:left;',
+    'padding:8px 10px;border-bottom:1.5px solid #cfd9d6}',
+    '.inv-tbl th.right,.inv-tbl td.right{text-align:right}',
+    '.inv-tbl td{padding:9px 10px;border-bottom:1px solid #e6ecea;vertical-align:top}',
+    '.inv-tbl .sl{width:34px;color:#5d6b67}',
+    '.inv-item{font-weight:700}',
+    '.strong{font-weight:800}',
+    '.inv-foot{display:flex;gap:24px;justify-content:space-between;margin-top:14px}',
+    '.inv-words{flex:1;min-width:0;padding-top:6px}',
+    '.inv-sum{flex:0 0 58%;max-width:300px}',
+    '.inv-sum-r{display:flex;justify-content:space-between;gap:16px;padding:5px 0;',
+    'font-size:10pt}',
+    '.inv-sum-r .num{font-variant-numeric:tabular-nums;white-space:nowrap}',
+    '.inv-sum-r.total{border-top:1.5px solid #cfd9d6;margin-top:6px;padding-top:9px;',
+    'font-size:13pt;font-weight:800;color:var(--ink)}',
+    '.inv-sum-r.pay{color:#5d6b67;font-size:9.4pt}',
+    '.inv-sum-r.due{border-top:1px solid #e6ecea;margin-top:4px;padding-top:8px;',
+    'font-weight:800;color:#b3261e}',
+    '.inv-sign{display:flex;gap:40px;justify-content:space-between;margin-top:46px}',
+    '.inv-sign-b{flex:0 0 42%}',
+    '.inv-line{border-top:1px solid #9aa7a3;margin-bottom:5px}',
+    '.inv-note{margin-top:28px;padding-top:10px;border-top:1px solid #e6ecea;',
+    'text-align:center}',
+  ].join("");
+
+  function tones() {
+    const css = getComputedStyle(document.documentElement);
+    const ink = (css.getPropertyValue("--pri-d") || "#0b5f58").trim() || "#0b5f58";
+    return { ink: ink };
+  }
+
+  A.printInvoice = function (sale, items) {
+    const due = Number(sale.due) || 0;
+    const paid = Number(sale.paid_cash) + Number(sale.paid_mobile);
+    const stamp = due > 0.005 ? (paid > 0.005 ? "#b06a00" : "#b3261e") : "#12795f";
+    const t = tones();
+    const frame = document.createElement("iframe");
+    frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+    document.body.appendChild(frame);
+    const doc = frame.contentWindow.document;
+    doc.open();
+    doc.write('<!doctype html><html lang="' + (bn() ? "bn" : "en") + '"><head>'
+      + '<meta charset="utf-8"><title>' + (sale.invoice_no || "memo") + '</title>'
+      + "<style>:root{--ink:" + t.ink + ";--stamp:" + stamp + "}" + SHEET_CSS
+      + "</style></head><body></body></html>");
+    doc.close();
+    // the embedded font lives in this document, so carry it across
+    A.$$('style', document.head).forEach(function (s) {
+      if (s.textContent.indexOf("@font-face") < 0) return;
+      const copy = doc.createElement("style");
+      copy.textContent = s.textContent;
+      doc.head.appendChild(copy);
+    });
+    doc.body.appendChild(A.invoiceNode(sale, items));
+    setTimeout(function () {
+      try { frame.contentWindow.focus(); frame.contentWindow.print(); }
+      catch (err) { A.toast(L("প্রিন্ট করা গেল না", "Could not print"), "bad"); }
+      setTimeout(function () { frame.remove(); }, 1500);
+    }, 260);
+  };
+
+  /** Show it on screen first — on a phone there is usually no printer,
+   *  and the shopkeeper wants to check it before sending. */
+  A.showInvoice = function (sale, items) {
+    const m = A.modal({ title: L("A4 মেমো", "A4 memo"), noFocus: true });
+    m.veil.querySelector(".modal").classList.add("wide");
+    const paper = el("div", { class: "invpaper" }, [A.invoiceNode(sale, items)]);
+    m.body.appendChild(paper);
+    m.footer.appendChild(el("button", { class: "btn", text: T("Close"), onclick: m.close }));
+    m.footer.appendChild(el("button", { class: "btn btn-pri", text: "🖨 " + T("Print"),
+      onclick: function () { A.printInvoice(sale, items); } }));
   };
 })(window);
 </script>
@@ -6096,13 +7690,144 @@ window.SHOP = {
   };
 
   // ------------------------------------------------------------ backup
-  A.saveBackup = function () {
+  /* ------------------------------------------------------------ backup
+     A backup that stays in the Downloads folder of the phone that broke
+     is no backup at all.  Three ways out, in the order a shopkeeper can
+     actually manage them:
+       share   — the phone's own sheet: Drive, WhatsApp, Gmail, one tap
+       folder  — a folder chosen once; if it sits inside Google Drive or
+                 OneDrive on a PC, every backup syncs by itself
+       download— the plain file, always available as a fallback
+  */
+  function backupBlob() {
     const dump = A.store.exportAll();
     dump.shop_name = A.shopName();
-    const blob = new Blob([JSON.stringify(dump)], { type: "application/json" });
-    A.download(blob, "pos-backup-" + root.POSEngine.helpers.dayKey() + ".json");
+    return new Blob([JSON.stringify(dump)], { type: "application/json" });
+  }
+  function backupName() {
+    const shop = String(A.shopName() || "pos").replace(/[\\/:*?"<>|]/g, "").slice(0, 30);
+    return shop + " - backup " + root.POSEngine.helpers.dayKey() + ".json";
+  }
+  function markSaved() {
     A.eng.setSetting("last_backup", root.POSEngine.helpers.stamp());
-    A.toast(root.isBn() ? "ব্যাকআপ ফাইল নেমে গেছে" : "Backup file downloaded", "ok");
+  }
+
+  /* --- the folder a PC can keep writing into ----------------------- */
+  const HANDLE_DB = "pos_backup_folder";
+  function handleStore(mode) {
+    return new Promise(function (resolve, reject) {
+      let req;
+      try { req = indexedDB.open(HANDLE_DB, 1); }
+      catch (e) { return reject(e); }
+      req.onupgradeneeded = function (ev) {
+        ev.target.result.createObjectStore("handles");
+      };
+      req.onerror = function () { reject(req.error); };
+      req.onsuccess = function (ev) {
+        const db = ev.target.result;
+        resolve(db.transaction("handles", mode).objectStore("handles"));
+      };
+    });
+  }
+  function readHandle() {
+    return handleStore("readonly").then(function (st) {
+      return new Promise(function (resolve) {
+        const r = st.get(A.store.shopId);
+        r.onsuccess = function () { resolve(r.result || null); };
+        r.onerror = function () { resolve(null); };
+      });
+    }).catch(function () { return null; });
+  }
+  function writeHandle(h) {
+    return handleStore("readwrite").then(function (st) {
+      st.put(h, A.store.shopId);
+    }).catch(function () {});
+  }
+
+  A.backupFolderSupported = function () {
+    return typeof root.showDirectoryPicker === "function";
+  };
+
+  A.pickBackupFolder = function () {
+    if (!A.backupFolderSupported()) {
+      A.toast(root.isBn() ? "এই ব্রাউজারে ফোল্ডার বাছা যায় না — কম্পিউটারের Chrome লাগবে"
+                          : "This browser cannot pick a folder", "warn");
+      return Promise.resolve(null);
+    }
+    return root.showDirectoryPicker({ mode: "readwrite", id: "pos-backup" })
+      .then(function (h) {
+        return writeHandle(h).then(function () {
+          A.eng.setSetting("backup_folder", h.name || "");
+          A.toast((root.isBn() ? "ফোল্ডার বাছা হয়েছে: " : "Folder set: ") + h.name, "ok");
+          A.refresh();
+          return h;
+        });
+      })
+      .catch(function () { return null; });   // the picker was dismissed
+  };
+
+  A.forgetBackupFolder = function () {
+    return writeHandle(null).then(function () {
+      A.eng.setSetting("backup_folder", "");
+      A.toast(root.isBn() ? "ফোল্ডার ভুলে গেছি" : "Folder forgotten", "ok");
+      A.refresh();
+    });
+  };
+
+  /** Write into the chosen folder if we still have permission for it. */
+  function writeToFolder(blob, name) {
+    return readHandle().then(function (h) {
+      if (!h || !h.getFileHandle) return false;
+      const ask = h.queryPermission
+        ? h.queryPermission({ mode: "readwrite" })
+        : Promise.resolve("granted");
+      return Promise.resolve(ask).then(function (state) {
+        if (state === "granted") return true;
+        if (!h.requestPermission) return false;
+        return h.requestPermission({ mode: "readwrite" })
+          .then(function (s) { return s === "granted"; });
+      }).then(function (ok) {
+        if (!ok) return false;
+        return h.getFileHandle(name, { create: true })
+          .then(function (fh) { return fh.createWritable(); })
+          .then(function (w) { return w.write(blob).then(function () { return w.close(); }); })
+          .then(function () { return h.name || true; });
+      });
+    }).catch(function () { return false; });
+  }
+
+  A.saveBackup = function () {
+    const blob = backupBlob(), name = backupName();
+    writeToFolder(blob, name).then(function (where) {
+      A.download(blob, name);
+      markSaved();
+      A.toast(where
+        ? (root.isBn() ? "ব্যাকআপ নেমেছে, আর " + where + " ফোল্ডারেও রাখা হয়েছে"
+                       : "Backup downloaded and written to " + where)
+        : (root.isBn() ? "ব্যাকআপ ফাইল নেমে গেছে" : "Backup file downloaded"), "ok");
+      A.refresh();
+    });
+  };
+
+  /** The phone's own share sheet — Drive, WhatsApp, Gmail, whatever the
+   *  shopkeeper already uses.  No account to set up on our side. */
+  A.shareBackup = function () {
+    const blob = backupBlob(), name = backupName();
+    const file = (typeof File === "function")
+      ? new File([blob], name, { type: "application/json" }) : null;
+    if (file && root.navigator.canShare && root.navigator.canShare({ files: [file] })) {
+      root.navigator.share({ files: [file],
+        title: A.shopName(),
+        text: (root.isBn() ? "হিসাবের ব্যাকআপ · " : "Accounts backup · ") + A.shopName(),
+      }).then(function () {
+        markSaved(); A.refresh();
+      }).catch(function () {});
+      return;
+    }
+    A.toast(root.isBn()
+      ? "এই ব্রাউজারে সরাসরি শেয়ার হয় না — ফাইলটা নামিয়ে নিজে পাঠান"
+      : "Sharing is not available here — download the file and send it", "warn");
+    A.saveBackup();
   };
 
   A.restoreBackup = function () {
@@ -6123,14 +7848,18 @@ window.SHOP = {
             : "Everything now will be replaced by the backup.", { danger: true })
           .then(function (yes) {
             if (!yes) return;
+            const failed = function (err) {
+              A.toast((root.isBn() ? "ফেরানো গেল না: " : "Restore failed: ")
+                + (err && err.message ? err.message : ""), "bad");
+            };
             try {
-              A.store.importAll(data).then(function () {
-                A.toast(root.isBn() ? "ফেরানো হয়েছে" : "Restored", "ok");
-                setTimeout(function () { location.reload(); }, 700);
-              });
-            } catch (e) {
-              A.toast((root.isBn() ? "ফেরানো গেল না: " : "Restore failed: ") + e.message, "bad");
-            }
+              A.store.importAll(data).then(function (rows) {
+                A.toast((root.isBn() ? "ফেরানো হয়েছে · " : "Restored · ")
+                  + (root.isBn() ? root.bnDigits(String(rows)) : rows)
+                  + (root.isBn() ? " টি লাইন" : " rows"), "ok");
+                setTimeout(function () { location.reload(); }, 900);
+              }).catch(failed);
+            } catch (e) { failed(e); }
           });
       };
       reader.readAsText(f);
